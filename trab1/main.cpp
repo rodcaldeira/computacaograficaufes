@@ -40,6 +40,13 @@ class Circle {
       pos[0] = x;
       pos[1] = y;
     }
+    void setPos(int x, int y) {
+      pos[0] = x;
+      pos[1] = y;
+    }
+    int * getPos() {
+      return pos;
+    }
 };
 
 
@@ -48,6 +55,7 @@ void mouse(int button, int state, int x, int y) {
     int x_size_window = glutGet(GLUT_WINDOW_WIDTH); // get window width
     int y_size_window = glutGet(GLUT_WINDOW_HEIGHT); // get window height
     y = y_size_window - y;
+    cout << "x: " << x << " y: " << y << endl;
 
     double x_in_ortho, y_in_ortho;
     x_in_ortho = 1.0 / (double) x_size_window; // valor da unidade em relacao a x
@@ -140,7 +148,8 @@ void init(void) {
     /* inicializar sistema de vizualização. */
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glOrtho(0.0, 1.0, 0.0, 1.0, -1.0, 1.0);
+    //glOrtho(0.0, 1.0, 0.0, 1.0, -1.0, 1.0);
+    glOrtho(0.0, wdw_dim[0], 0.0, wdw_dim[1], -1.0, 1.0);
 }
 void display(void)
 {
@@ -149,12 +158,7 @@ void display(void)
 
    /* Desenhar um polígono branco (retângulo) */
    glColor3f (1.0, 1.0, 1.0);
-   glBegin(GL_POLYGON);
-      glVertex3f (0.25, 0.25, 0.0);
-      glVertex3f (0.75, 0.25, 0.0);
-      glVertex3f (0.75, 0.75, 0.0);
-      glVertex3f (0.25, 0.75, 0.0);
-   glEnd();
+
 
    /* Não esperar! */
    glutSwapBuffers ();

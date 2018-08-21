@@ -1,17 +1,14 @@
 CODIGO = $(wildcard *.c)
-    
-all: trab1
- 
+
+all:
+	g++ main.cpp tinyxml2/tinyxml2.cpp -o trabalhocg -lGL -lGLU -lglut
+
 trab1: $(CODIGO:.c=.o)
-	gcc -lm -o $@ $^ 
- 
-%.o: %.c
-	gcc -g -lm -Wall -c $< -o $@
-    
+	gcc -lm -o $@ $^
+
 clean:
-	-rm -f *.o trab1 *~
+	-rm -f *.o trabalhocg *~
 
 remade:
 	$(MAKE) clean
 	$(MAKE)
- 
