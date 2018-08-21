@@ -21,7 +21,54 @@ GLfloat bg_RGB[3];
 GLfloat bg_R;
 // window size 0 - width; 1 - height;
 GLint wdw_dim[2];
+
+bool click_on_circle = false; // flag para verificar se foi clicado dentro do circulo
+// pos do x quando foi feito o click - serve para calcular o gx e gy
+GLfloat pos_x_on_click = 0.0;
+GLfloat pos_y_on_click = 0.0;
+
 const char *title;
+bool* mouseStates = new bool[3];
+
+class Circle {
+  private:
+    int radius;
+    int pos[2]; // 0 - x; 1 - y
+  public:
+    Circle(int x, int y, int r) {
+      radius = r;
+      pos[0] = x;
+      pos[1] = y;
+    }
+};
+
+
+
+void mouse(int button, int state, int x, int y) {
+    int x_size_window = glutGet(GLUT_WINDOW_WIDTH); // get window width
+    int y_size_window = glutGet(GLUT_WINDOW_HEIGHT); // get window height
+    y = y_size_window - y;
+
+    double x_in_ortho, y_in_ortho;
+    x_in_ortho = 1.0 / (double) x_size_window; // valor da unidade em relacao a x
+    y_in_ortho = 1.0 / (double) y_size_window; // valor da unidade em relacao a y
+
+    if (button == GLUT_LEFT_BUTTON) {  // verifica se foi o botao esquerdo o clicado
+        if (state == GLUT_DOWN) { // se o botão foi apertado
+            mouseStates[button] = true; // seta estado do botao como true (sem finalidade)
+            pos_x_on_click = x_in_ortho * x;
+            pos_y_on_click = y_in_ortho * y;
+            cout << "left button pressed down " << pos_x_on_click << "," << pos_y_on_click << endl;
+        } else { // soltou o botao esquerdo
+            mouseStates[button] = false;
+            cout << "left button released" << endl;
+        }
+
+    } else if (button == GLUT_RIGHT_BUTTON) { // click do botao direito
+        cout << "right button pressed or released" << endl;
+    }
+}
+
 
 int XMLCheckResult(int a_eResult)
 {
@@ -113,6 +160,9 @@ void display(void)
    glutSwapBuffers ();
 }
 
+void Idle(void) {
+	glutPostRedisplay();
+}
 int main(int argc, char** argv) {
   char *path_to;
 
@@ -137,6 +187,8 @@ int main(int argc, char** argv) {
   init ();
   glutDisplayFunc(display);
   //glutReshapeFunc(reshape);
+  glutIdleFunc(Idle); // pq nao funciona sem esse callback?
+  glutMouseFunc(mouse);
   glutMainLoop();
   return 0;
 }
