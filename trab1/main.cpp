@@ -64,6 +64,8 @@ class Circle {
 
 Circle * detectClick(int x, int y);
 bool collision(int x, int y, int r);
+
+Circle * clicked_circle;
 list<Circle> lst;
 
 void mouse(int button, int state, int x, int y) {
@@ -85,17 +87,21 @@ void mouse(int button, int state, int x, int y) {
         cout << "left button released" << endl;
     }
   } else if (button == GLUT_RIGHT_BUTTON) { // click do botao direito
-    cout << "procurando negoça" << endl;
-    Circle * clicked_circle = detectClick(x,y);
-    if (clicked_circle != nullptr) {
-      cout << "achou negoça" << endl;
-    } else {
-      cout << "nao achou negoça" << endl;
+    if (state == GLUT_DOWN) { // botao pressionado
+      cout << "procurando negoça" << endl;
+      clicked_circle = detectClick(x,y);
+      if (clicked_circle != nullptr) {
+        cout << "achou negoça" << endl;
+      } else {
+        cout << "nao achou negoça" << endl;
+      }
+    } else { //botao solto
+      clicked_circle = nullptr; // libera a referencia do circulo selecionado para moviementacao
     }
   }
 }
 /*
-Funcao que detecta se
+Funcao que detecta se existe colisão a partir de um click
 */
 bool collision(int x, int y, int r) {
   int *c_pos;
