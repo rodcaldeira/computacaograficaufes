@@ -5,20 +5,20 @@
 #include <cstddef>
 #include <iostream>
 #include <sstream>
+#include <list>
 #include <GL/gl.h>
 #include <GL/glu.h>
 #include <stdlib.h>
 #include <GL/glut.h>
+#include <math.h>
 #include "tinyxml2/tinyxml2.h"
-
+#define PI 3.1415926535897932384626433832795
 using namespace std;
 
 GLint circle_radius;
 GLfloat circle_RGB[3];
-GLfloat circle_R;
 // variavel cor do background
 GLfloat bg_RGB[3];
-GLfloat bg_R;
 // window size 0 - width; 1 - height;
 GLint wdw_dim[2];
 
@@ -26,6 +26,8 @@ bool click_on_circle = false; // flag para verificar se foi clicado dentro do ci
 // pos do x quando foi feito o click - serve para calcular o gx e gy
 GLfloat pos_x_on_click = 0.0;
 GLfloat pos_y_on_click = 0.0;
+
+
 
 const char *title;
 bool* mouseStates = new bool[3];
@@ -47,36 +49,77 @@ class Circle {
     int * getPos() {
       return pos;
     }
+    void setRadius(int r) {
+      radius = r;
+    }
+    int getRadius() {
+      return radius;
+    }
+    bool clicked(int x, int y) {
+      if ( ((x-pos[0])*(x-pos[0]) + (y-pos[1])*(y-pos[1])) <= radius*radius ) return true;
+      else return false;
+    }
 };
 
 
+Circle * detectClick(int x, int y);
+bool collision(int x, int y, int r);
+list<Circle> lst;
 
 void mouse(int button, int state, int x, int y) {
-    int x_size_window = glutGet(GLUT_WINDOW_WIDTH); // get window width
-    int y_size_window = glutGet(GLUT_WINDOW_HEIGHT); // get window height
-    y = y_size_window - y;
-    cout << "x: " << x << " y: " << y << endl;
+  int x_size_window = glutGet(GLUT_WINDOW_WIDTH); // get window width
+  int y_size_window = glutGet(GLUT_WINDOW_HEIGHT); // get window height
+  y = y_size_window - y; // transpoe o eixo y
+  //cout << "x: " << x << " y: " << y << endl;
+  if (button == GLUT_LEFT_BUTTON) {  // verifica se foi o botao esquerdo o clicado
+    if (state == GLUT_DOWN) { // se o botão foi apertado
+      mouseStates[button] = true; // seta estado do botao como true (sem finalidade)
+      if (!collision(x, y, circle_radius)) {
+        lst.push_back(Circle(x, y, circle_radius));
+      } else {
+        cout << "COLLISION!" << endl;
+      }
 
-    double x_in_ortho, y_in_ortho;
-    x_in_ortho = 1.0 / (double) x_size_window; // valor da unidade em relacao a x
-    y_in_ortho = 1.0 / (double) y_size_window; // valor da unidade em relacao a y
-
-    if (button == GLUT_LEFT_BUTTON) {  // verifica se foi o botao esquerdo o clicado
-        if (state == GLUT_DOWN) { // se o botão foi apertado
-            mouseStates[button] = true; // seta estado do botao como true (sem finalidade)
-            pos_x_on_click = x_in_ortho * x;
-            pos_y_on_click = y_in_ortho * y;
-            cout << "left button pressed down " << pos_x_on_click << "," << pos_y_on_click << endl;
-        } else { // soltou o botao esquerdo
-            mouseStates[button] = false;
-            cout << "left button released" << endl;
-        }
-
-    } else if (button == GLUT_RIGHT_BUTTON) { // click do botao direito
-        cout << "right button pressed or released" << endl;
+    } else { // soltou o botao esquerdo
+        mouseStates[button] = false;
+        cout << "left button released" << endl;
     }
+  } else if (button == GLUT_RIGHT_BUTTON) { // click do botao direito
+    cout << "procurando negoça" << endl;
+    Circle * clicked_circle = detectClick(x,y);
+    if (clicked_circle != nullptr) {
+      cout << "achou negoça" << endl;
+    } else {
+      cout << "nao achou negoça" << endl;
+    }
+  }
+}
+/*
+Funcao que detecta se
+*/
+bool collision(int x, int y, int r) {
+  int *c_pos;
+  for (Circle c : lst) {
+    c_pos = c.getPos();
+    if (((y-c_pos[1])*(y-c_pos[1]) + (x-c_pos[0])*(x-c_pos[0])) <= (2*circle_radius)*(2*circle_radius)) {
+      return true;
+    }
+  }
+  return false;
 }
 
+/*
+Funcao que detecta se teve click no circulo
+*/
+Circle * detectClick(int x, int y) {
+  Circle *resp = nullptr;
+  for (Circle c : lst) {
+    if ( c.clicked(x, y) ) {
+      return resp = &c;
+    }
+  }
+  return resp;
+}
 
 int XMLCheckResult(int a_eResult)
 {
@@ -153,15 +196,22 @@ void init(void) {
 }
 void display(void)
 {
-   /* Limpar todos os pixels  */
-   glClear (GL_COLOR_BUFFER_BIT);
+  glClear(GL_COLOR_BUFFER_BIT);
+  int *pos;
+  int radius;
+  for (Circle c : lst) { // devo ter esse condicional dentro da funcao de display? qual alternativa eu teria?
+      pos = c.getPos();
+      radius = c.getRadius();
+      glColor3f(circle_RGB[0], circle_RGB[1], circle_RGB[2]);
+      //v1[0] =
+      glBegin(GL_POLYGON);
+      for(double i = 0; i < 2 * PI; i += PI / 12) //<-- Change this Value
+        glVertex3f(cos(i) * radius + pos[0], sin(i) * radius + pos[1], 0.0);
+     glEnd();
+  }
 
-   /* Desenhar um polígono branco (retângulo) */
-   glColor3f (1.0, 1.0, 1.0);
-
-
-   /* Não esperar! */
-   glutSwapBuffers ();
+  /* Não esperar! */
+  glutSwapBuffers();
 }
 
 void Idle(void) {
