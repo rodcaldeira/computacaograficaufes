@@ -36,7 +36,10 @@ class Circle {
   private:
     int radius;
     int pos[2]; // 0 - x; 1 - y
+    bool active = false;
+    bool toDelete = false;
   public:
+
     Circle(int x, int y, int r) {
       radius = r;
       pos[0] = x;
@@ -45,28 +48,45 @@ class Circle {
     void setPos(int x, int y) {
       pos[0] = x;
       pos[1] = y;
+      return;
     }
     int * getPos() {
       return pos;
     }
     void setRadius(int r) {
       radius = r;
+      return;
     }
     int getRadius() {
       return radius;
     }
     bool clicked(int x, int y) {
-      if ( ((x-pos[0])*(x-pos[0]) + (y-pos[1])*(y-pos[1])) <= radius*radius ) return true;
-      else return false;
+      if ( ((x-pos[0])*(x-pos[0]) + (y-pos[1])*(y-pos[1])) <= radius*radius ) active = true;
+      else active = false; // false;
+    }
+    bool getActive() {
+      return active;
+    }
+    void setActive(bool state)
+    {
+      active = state;
+      return;
+    }
+    bool getToDelete() {
+      return toDelete;
+    }
+    void setToDelete(bool state) {
+      toDelete = state;
+      return;
     }
 };
 
-
-Circle * detectClick(int x, int y);
+void detectClick(int x, int y);
 bool collision(int x, int y, int r);
 
 Circle * clicked_circle;
 list<Circle> lst;
+list<Circle>::iterator c, delC;
 
 void mouse(int button, int state, int x, int y) {
   int x_size_window = glutGet(GLUT_WINDOW_WIDTH); // get window width
@@ -78,38 +98,64 @@ void mouse(int button, int state, int x, int y) {
       mouseStates[button] = true; // seta estado do botao como true (sem finalidade)
       if (!collision(x, y, circle_radius)) {
         lst.push_back(Circle(x, y, circle_radius));
-      } else {
-        cout << "COLLISION!" << endl;
       }
-
     } else { // soltou o botao esquerdo
         mouseStates[button] = false;
-        cout << "left button released" << endl;
     }
-  } else if (button == GLUT_RIGHT_BUTTON) { // click do botao direito
+  } else if ((button == GLUT_RIGHT_BUTTON) && (lst.size() > 0)) { // click do botao direito
     if (state == GLUT_DOWN) { // botao pressionado
-      cout << "procurando negoça" << endl;
-      clicked_circle = detectClick(x,y);
-      if (clicked_circle != nullptr) {
-        cout << "achou negoça" << endl;
-      } else {
-        cout << "nao achou negoça" << endl;
-      }
+      detectClick(x,y);
     } else { //botao solto
-      clicked_circle = nullptr; // libera a referencia do circulo selecionado para moviementacao
+      for (c = lst.begin(); c != lst.end(); ++c) c->setActive(false);
     }
   }
 }
+
+
+void dragAndDrop(int x, int y) {
+    int x_size_window = glutGet(GLUT_WINDOW_WIDTH); // get window width
+    int y_size_window = glutGet(GLUT_WINDOW_HEIGHT); // get window height
+    y = y_size_window - y;
+    //c = lst.begin();
+    for (c = lst.begin(); c != lst.end(); ++c) {
+      if (c->getActive()) {
+        // por nao saber o comportamento fora da tela, limitei a movimentação do círculo até os limites da janela
+        if ((x >= 0) && (x <= x_size_window)) c->setPos(x, c->getPos()[1]);
+        if ((y >= 0) && (y <= y_size_window)) c->setPos(c->getPos()[0], y);
+
+      } else { // se nao ta ativo ele esta passivo de receber colisão e ser deletado
+        int *c_pos, c_radius;
+        c_pos = c->getPos();
+        c_radius = c->getRadius();
+        if ( ((y-c_pos[1])*(y-c_pos[1]) + (x-c_pos[0])*(x-c_pos[0])) <= (2*c_radius)*(2*c_radius) ) { // verifica se tem colisao
+          c->setToDelete(true);
+        }
+      }
+    }
+    delC = lst.begin();
+    c = lst.begin();
+    while (c != lst.end()) {
+      if (!c->getActive() && c->getToDelete()) {
+        delC = c;
+        c++;
+        lst.erase(delC);
+
+      } else {
+        c++;
+      }
+    }
+    glutPostRedisplay();
+}
+
 /*
 Funcao que detecta se existe colisão a partir de um click
 */
 bool collision(int x, int y, int r) {
   int *c_pos;
-  for (Circle c : lst) {
-    c_pos = c.getPos();
-    if (((y-c_pos[1])*(y-c_pos[1]) + (x-c_pos[0])*(x-c_pos[0])) <= (2*circle_radius)*(2*circle_radius)) {
+  for (c = lst.begin(); c != lst.end(); ++c) {
+    c_pos = c->getPos();
+    if (((y-c_pos[1])*(y-c_pos[1]) + (x-c_pos[0])*(x-c_pos[0])) <= (2*circle_radius)*(2*circle_radius))
       return true;
-    }
   }
   return false;
 }
@@ -117,14 +163,11 @@ bool collision(int x, int y, int r) {
 /*
 Funcao que detecta se teve click no circulo
 */
-Circle * detectClick(int x, int y) {
+void detectClick(int x, int y) {
   Circle *resp = nullptr;
-  for (Circle c : lst) {
-    if ( c.clicked(x, y) ) {
-      return resp = &c;
-    }
-  }
-  return resp;
+  for (c = lst.begin(); c != lst.end(); ++c)
+    c->clicked(x, y);
+  return;
 }
 
 int XMLCheckResult(int a_eResult)
@@ -197,7 +240,6 @@ void init(void) {
     /* inicializar sistema de vizualização. */
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    //glOrtho(0.0, 1.0, 0.0, 1.0, -1.0, 1.0);
     glOrtho(0.0, wdw_dim[0], 0.0, wdw_dim[1], -1.0, 1.0);
 }
 void display(void)
@@ -246,9 +288,9 @@ int main(int argc, char** argv) {
   glutCreateWindow (title);
   init ();
   glutDisplayFunc(display);
-  //glutReshapeFunc(reshape);
-  glutIdleFunc(Idle); // pq nao funciona sem esse callback?
+  glutIdleFunc(Idle);
   glutMouseFunc(mouse);
+  glutMotionFunc(dragAndDrop);
   glutMainLoop();
   return 0;
 }
