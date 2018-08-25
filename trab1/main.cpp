@@ -111,6 +111,7 @@ void mouse(int button, int state, int x, int y) {
   }
 }
 
+// tem como colocar no mesmo loop para excluir - otimizar esse codigo se possivel
 
 void dragAndDrop(int x, int y) {
     int x_size_window = glutGet(GLUT_WINDOW_WIDTH); // get window width
