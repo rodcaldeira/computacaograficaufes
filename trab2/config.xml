@@ -2,6 +2,6 @@
 	<arquivoDaArena>
 		<nome>arena</nome>
 		<tipo>svg</tipo>
-		<caminho>coloque o seu caminho aqui para testar</caminho>
+		<caminho>./</caminho>
 	</arquivoDaArena>
 </aplicacao>
