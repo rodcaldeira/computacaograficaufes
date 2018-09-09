@@ -18,7 +18,7 @@ void Player::DesenhaCircle(GLfloat x, GLfloat y, GLfloat rad, GLfloat R, GLfloat
 
   glBegin(GL_POLYGON);
      for(double i = 0; i < 2 * PI; i += PI / 12)
-       glVertex3f(cos(i) * rad + x, sin(i) * rad + y, 0.0);
+       glVertex3f(cos(i) * rad, sin(i) * rad, 0.0);
   glEnd();
 }
 
@@ -27,6 +27,7 @@ void Player::DesenhaPlayer(GLfloat x, GLfloat y, GLfloat z, GLfloat radius, GLfl
   glPushMatrix();
     glTranslatef(x, y, 0.0);
     DesenhaCircle(x, y, radius, R, G, B);
+
   glPopMatrix();
 }
 

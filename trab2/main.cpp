@@ -73,23 +73,17 @@ void display(void)
 void init (void)
 {
   /* selecionar cor de fundo (preto) */
-  glClearColor (0.0, 0.0, 0.0, 0.0);
+  glClearColor (0.5, 0.5, 0.5, 0.0);
 
   /* inicializar sistema de viz. */
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  /*glOrtho(world.getPosX() - world.getRadius(),
+  glOrtho(world.getPosX() - world.getRadius(),
           world.getPosX() + world.getRadius(),
           world.getPosY() - world.getRadius(),
           world.getPosY() + world.getRadius(),
           -100.0,
-          100.0);*/
-          glOrtho(200,
-                  800,
-                  200,
-                  800,
-                  -100.0,
-                  100.0);
+          100.0);
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
 }
@@ -102,7 +96,6 @@ void keyup(unsigned char key, int x, int y)
 
 void keyPress(unsigned char key, int x, int y)
 {
-  cout << "X: " << p.getPosX() << " Y: " << p.getPosY() << endl;
   switch (key)
   {
       case 'w':

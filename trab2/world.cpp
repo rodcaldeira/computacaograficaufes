@@ -7,7 +7,7 @@ void Island::DesenhaCircle(GLfloat x, GLfloat y, GLfloat rad, GLfloat R, GLfloat
 
   glBegin(GL_POLYGON);
      for(double i = 0; i < 2 * PI; i += PI / 12)
-       glVertex3f(cos(i) * rad + x, sin(i) * rad + y, 0.0);
+       glVertex3f(cos(i) * rad, sin(i) * rad, 0.0);
   glEnd();
 }
 
@@ -71,8 +71,8 @@ void Sea::DesenhaCircle(GLfloat x, GLfloat y, GLfloat rad, GLfloat R, GLfloat G,
   glColor3f(R, G, B);
 
   glBegin(GL_POLYGON);
-     for(double i = 0; i < 2 * PI; i += PI / 12)
-       glVertex3f(cos(i) * rad + x, sin(i) * rad + y, 0.0);
+     for(double i = 0; i < 2 * PI; i += PI / 36)
+       glVertex3f(cos(i) * rad, sin(i) * rad, 0.0);
   glEnd();
 }
 
