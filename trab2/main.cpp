@@ -27,19 +27,24 @@
 #include <GL/glut.h>
 #include <math.h>
 #include "tinyxml2/tinyxml2.h"
-#include "xmlreader.hpp"
 #include "player.hpp"
+#include "world.hpp"
+#include "enemy.hpp"
 using namespace std;
 
 // variaveis
 string path_to_svg;
 Player p;
+Sea world;
+list<Island> islands;
+list<Island>::iterator isl;
+list<Enemy> enemies;
+list<Enemy>::iterator enmy, del_enemy;
 GLint janela_x;
 GLint janela_y;
-GLfloat ortho_x;
-GLfloat ortho_y;
-GLfloat ortho_z;
-GLfloat ortho_radius;
+GLfloat gX, gY;
+//Key status
+int keyStatus[256];
 /*
 ref para funcao str2int
 https://stackoverflow.com/questions/16388510/evaluate-a-string-with-a-switch-in-c#answer-16388610
@@ -56,10 +61,110 @@ void display(void)
    glClear (GL_COLOR_BUFFER_BIT);
 
    /* Desenhar um polígono branco (retângulo) */
-   p.Desenha();
 
+   world.Desenha();
+   for (Island i : islands) i.Desenha();
+   for (Enemy e : enemies) e.Desenha();
+   p.Desenha();
    /* Não esperar! */
    glutSwapBuffers ();
+}
+
+void init (void)
+{
+  /* selecionar cor de fundo (preto) */
+  glClearColor (0.0, 0.0, 0.0, 0.0);
+
+  /* inicializar sistema de viz. */
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  /*glOrtho(world.getPosX() - world.getRadius(),
+          world.getPosX() + world.getRadius(),
+          world.getPosY() - world.getRadius(),
+          world.getPosY() + world.getRadius(),
+          -100.0,
+          100.0);*/
+          glOrtho(200,
+                  800,
+                  200,
+                  800,
+                  -100.0,
+                  100.0);
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
+}
+
+void keyup(unsigned char key, int x, int y)
+{
+    keyStatus[(int)(key)] = 0;
+    glutPostRedisplay();
+}
+
+void keyPress(unsigned char key, int x, int y)
+{
+  cout << "X: " << p.getPosX() << " Y: " << p.getPosY() << endl;
+  switch (key)
+  {
+      case 'w':
+      case 'W':
+           keyStatus[(int)('w')] = 1; //Using keyStatus trick
+           break;
+      case 's':
+      case 'S':
+           keyStatus[(int)('s')] = 1; //Using keyStatus trick
+           break;
+      case 'a':
+      case 'A':
+           keyStatus[(int)('a')] = 1; //Using keyStatus trick
+           break;
+      case 'd':
+      case 'D':
+           keyStatus[(int)('d')] = 1; //Using keyStatus trick
+           break;
+      case 27 :
+           exit(0);
+  }
+  glutPostRedisplay();
+}
+
+void idle(void)
+{
+    //Treat keyPress
+    if(keyStatus[(int)('a')])
+    {
+        p.MoveX(-0.01);
+    }
+    if(keyStatus[(int)('d')])
+    {
+        p.MoveX(0.01);
+    }
+    if(keyStatus[(int)('w')])
+    {
+        p.MoveY(0.01);
+    }
+    if(keyStatus[(int)('s')])
+    {
+        p.MoveY(-0.01);
+    }
+
+    glutPostRedisplay();
+}
+
+
+void mouse(int button, int state, int x, int y){
+    int tamanhoDaJanela = ceil(world.getRadius()*2);
+    y = tamanhoDaJanela - y;
+    printf("x:%d y:%d\n", x, y);
+    gX = (GLfloat)x/tamanhoDaJanela;
+    gY = (GLfloat)y/tamanhoDaJanela;
+}
+
+void motion(int x, int y){
+    int tamanhoDaJanela = ceil(world.getRadius()*2);
+    y = tamanhoDaJanela - y;
+    printf("x:%d y:%d\n", x, y);
+    gX = (GLfloat)x/tamanhoDaJanela;
+    gY = (GLfloat)y/tamanhoDaJanela;
 }
 
 int main(int argc, char ** argv) {
@@ -120,17 +225,28 @@ int main(int argc, char ** argv) {
 				rgb[0] = 0.0;
 				rgb[1] = 0.0;
 				rgb[2] = 1.0;
-				cout << "retirar daqui valores do mar" << endl;
+        world.setColor(rgb);
+        world.setPosX(cx);
+        world.setPosY(cy);
+        world.setRadius(r);
+        world.setId(id);
+
+        cout << "ortho sera definido como" << endl;
+        cout << "left: " << (cx - r) << endl;
+        cout << "right: " << (cx + r) << endl;
+        cout << "top: " << cy + r << endl;
+        cout << "bottom: " << cy - r << endl;
+
 				break;
 			case str2int("red"):
-				// red em rgb: 0, 0, 1
+				// red em rgb: 1, 0, 0
 				rgb[0] = 1.0;
 				rgb[1] = 0.0;
 				rgb[2] = 0.0;
-				cout << "informacoes do enemy" << endl;
+        enemies.push_back(Enemy(id, rgb, cx, cy, 0.0, r));
 				break;
 			case str2int("green"):
-				// azul em rgb: 0, 0, 1
+				// verde em rgb: 0, 0, 1
 				rgb[0] = 0.0;
 				rgb[1] = 1.0;
 				rgb[2] = 0.0;
@@ -142,11 +258,11 @@ int main(int argc, char ** argv) {
 				cout << p.getPosX() << endl;
 				break;
 			case str2int("black"):
-				// azul em rgb: 0, 0, 1
+				// preto em rgb: 0, 0, 0
 				rgb[0] = 0.0;
 				rgb[1] = 0.0;
 				rgb[2] = 0.0;
-				cout << "info ilha" << endl;
+        islands.push_back(Island(id, rgb, cx, cy, 0.0, r));
 				break;
 			default:
 				break;
@@ -156,15 +272,21 @@ int main(int argc, char ** argv) {
 		tmp_xml = tmp_xml->NextSiblingElement("circle");
 	}
 
-	/*XMLCheckResult(e_result);
-	if (xmlReader(xml_doc_config, path_to_svg) == 1) {
-      cout << 1 << endl;
-  }
-	if (path_to_svg == nullptr) {
-		cout << "error" << endl;
-	} else {
-		cout << path_to_svg << endl;
-	}*/
+  int tamanhoDaJanela = ceil(world.getRadius()*2);
+  glutInit(&argc, argv);
+  glutInitDisplayMode (GLUT_DOUBLE | GLUT_RGB);
+  glutInitWindowSize (tamanhoDaJanela, tamanhoDaJanela);
+  glutInitWindowPosition (100, 100);
+  glutCreateWindow ("trabalhocg");
+  init ();
+  glutKeyboardFunc(keyPress);
+  glutKeyboardUpFunc(keyup);
+  glutDisplayFunc(display);
+  glutIdleFunc(idle);
+  glutMouseFunc(mouse);
+  glutMotionFunc(motion);
+  glutMainLoop();
+
 
 	return 0;
 }

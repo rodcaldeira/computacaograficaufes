@@ -22,11 +22,11 @@ void Player::DesenhaCircle(GLfloat x, GLfloat y, GLfloat rad, GLfloat R, GLfloat
   glEnd();
 }
 
-void Player::DesenhaPlayer(GLfloat x, GLfloat y, GLfloat pos_z, GLfloat radius) {
+void Player::DesenhaPlayer(GLfloat x, GLfloat y, GLfloat z, GLfloat radius, GLfloat R, GLfloat G, GLfloat B) {
 //void Player::DesenhaPlayer(GLfloat x, GLfloat y, GLfloat thetaWheel, GLfloat theta1, GLfloat theta2, GLfloat theta3) {
   glPushMatrix();
     glTranslatef(x, y, 0.0);
-    DesenhaRect(baseHeight, baseWidth, 1.0, 0.0, 0.0);
+    DesenhaCircle(x, y, radius, R, G, B);
   glPopMatrix();
 }
 

@@ -1,5 +1,5 @@
-#ifndef Player_HPP
-#define Player_HPP
+#ifndef Enemy_HPP
+#define Enemy_HPP
 #include <GL/gl.h>
 #include <GL/glu.h>
 // dimensions
@@ -9,7 +9,7 @@
 #define baseWidth 100
 #define radiusWheel 30
 
-class Player {
+class Enemy {
   GLfloat id;
   GLfloat pos_x;
   GLfloat pos_y;
@@ -21,20 +21,22 @@ class Player {
 private:
   void DesenhaRect(GLint height, GLint width, GLfloat R, GLfloat G, GLfloat B);
   void DesenhaCircle(GLfloat x, GLfloat y, GLfloat rad, GLfloat R, GLfloat G, GLfloat B);
-  void DesenhaPlayer(GLfloat x, GLfloat y, GLfloat pos_z, GLfloat radius, GLfloat R, GLfloat G, GLfloat B);//, GLfloat theta2, GLfloat theta3);
+  void DesenhaEnemy(GLfloat x, GLfloat y, GLfloat pos_z, GLfloat radius, GLfloat R, GLfloat G, GLfloat B);//, GLfloat theta2, GLfloat theta3);
 
 public:
-  Player() {
-    pos_x = 0;
-    pos_y = 0;
-    pos_z = 0;
-    rgb[0] = 0.0;
-    rgb[1] = 1.0;
-    rgb[2] = 0.0;
+  Enemy(GLint ident, GLfloat colors[3], GLfloat x = 0.0, GLfloat y = 0.0, GLfloat z = 0.0, GLfloat rad = 1.0) {
+    id = ident;
+    pos_x = x;
+    pos_y = y;
+    pos_z = z;
+    radius = rad;
+    rgb[0] = colors[0];
+    rgb[1] = colors[1];
+    rgb[2] = colors[2];
   }
 
   void Desenha() {
-    DesenhaPlayer(pos_x, pos_y, pos_z, radius, rgb[0], rgb[1], rgb[2]);
+    DesenhaEnemy(pos_x, pos_y, pos_z, radius, rgb[0], rgb[1], rgb[2]);
   }
 
   void MoveX(GLfloat dx);
@@ -68,4 +70,4 @@ public:
   GLint getId();
 
 };
-#endif /* END Player_hpp */
+#endif /* END Enemy_hpp */
