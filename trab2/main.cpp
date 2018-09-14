@@ -137,7 +137,7 @@ void keyPress(unsigned char key, int x, int y)
                                        e.getRadius(),
                                        p.getPosX(),
                                        p.getPosY(),
-                                       p.getRadius())) {
+                                       p.getmMaxRadius())) {
                                          p.setMovingZ(false);
                                          cout << "UNDER ENEMY" << endl;
                 } else {
