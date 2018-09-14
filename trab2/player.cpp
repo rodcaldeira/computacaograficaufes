@@ -1,5 +1,8 @@
 #include "player.hpp"
 #include <math.h>
+#include <cstddef>
+#include <iostream>
+#include <sstream>
 #define PI 3.1415926535897932384626433832795
 
 void Player::DesenhaRect(GLint height, GLint width, GLfloat R, GLfloat G, GLfloat B) {
@@ -75,6 +78,14 @@ GLfloat Player::getRadius() {
   return radius;
 }
 
+void Player::setMaxRadius(GLfloat r) {
+  max_radius = r;
+}
+
+GLfloat Player::getMaxRadius() {
+  return max_radius;
+}
+
 void Player::setColor(GLfloat colors[]) {
   for (int i = 0; i < 3; i++) rgb[i] = colors[i];
 }
@@ -89,4 +100,80 @@ void Player::setId(GLint ident) {
 
 GLint Player::getId() {
   return id;
+}
+
+void Player::setSubmerge(GLint i) {
+  submergin_status = i;
+}
+
+GLint Player::getSubmerge() {
+  return submergin_status;
+}
+
+void Player::setMovingZ(bool flag) {
+  moving_z_axis = flag;
+}
+
+bool Player::getMovingZ() {
+  return moving_z_axis;
+}
+
+void Player::submergeTime(int milisec) {
+  if (!getMovingZ()) {
+    return;
+  } else {
+    double sec = (float) milisec / 1000;
+    GLfloat maxRadius = getMaxRadius();
+    GLfloat a = maxRadius/2;
+    if (submergin_status == 1) {// on water level
+      setRadius((-1)*a*sec + maxRadius);
+      GLfloat colors[3] = {0.0, 1.0, 1.0};
+      setColor(colors);
+      if (getRadius() <= getMaxRadius()/2) {
+        setSubmerge(-1);
+        setMovingZ(false);
+      }
+    } else if (submergin_status == -1){
+      setRadius(a*sec + maxRadius/2);
+      if (getRadius() >= getMaxRadius()) {
+        GLfloat colors[3] = {0.0, 1.0, 0.0};
+        setColor(colors);
+        setSubmerge(1);
+        setMovingZ(false);
+      }
+    }
+  }
+}
+// NOT USING ELIPSED_TIME FOR FURTHER REFERENCE
+void Player::submerge() {
+  if (!getMovingZ()) {
+    return;
+  } else {
+    if (submergin_status == 1) { // on water level
+    // stuff to go under
+      if (getRadius() > getMaxRadius()/2) {
+        setRadius(getRadius() - 0.003);
+        GLfloat colors[3] = {0.0, 1.0, 1.0};
+        setColor(colors);
+        return;
+      } else {
+        setSubmerge(-1);
+        setMovingZ(false);
+      }
+    } else if (submergin_status == -1) { // under water level
+      // do stuff to go up
+      if (getRadius() < getMaxRadius()) {
+        setRadius(getRadius() + 0.003);
+        return;
+      } else {
+        setSubmerge(1);
+        GLfloat colors[3] = {0.0, 1.0, 0.0};
+
+
+
+        setColor(colors);
+        setMovingZ(false);
+      }
+    }
+  }
 }

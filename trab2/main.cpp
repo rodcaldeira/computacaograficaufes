@@ -43,6 +43,7 @@ list<Enemy>::iterator enmy, del_enemy;
 GLint janela_x;
 GLint janela_y;
 GLfloat gX, gY;
+int animation_submerge_time;
 //Key status
 int keyStatus[256];
 /*
@@ -55,6 +56,11 @@ constexpr unsigned int str2int(const char* str, int h = 0)
     return !str[h] ? 5381 : (str2int(str, h+1) * 33) ^ str[h];
 }
 
+bool collisionDetection(GLfloat x1, GLfloat y1, GLfloat r1, GLfloat x2, GLfloat y2, GLfloat r2) {
+  if ( sqrt(pow((x1-x2),2) + pow((y1-y2),2)) <= r1+r2 ) return true;
+  return false;
+}
+
 void display(void)
 {
    /* Limpar todos os pixels  */
@@ -64,8 +70,8 @@ void display(void)
 
    world.Desenha();
    for (Island i : islands) i.Desenha();
-   for (Enemy e : enemies) e.Desenha();
    p.Desenha();
+   for (Enemy e : enemies) e.Desenha();
    /* Não esperar! */
    glutSwapBuffers ();
 }
@@ -90,8 +96,8 @@ void init (void)
 
 void keyup(unsigned char key, int x, int y)
 {
-    keyStatus[(int)(key)] = 0;
-    glutPostRedisplay();
+  keyStatus[(int)(key)] = 0;
+  glutPostRedisplay();
 }
 
 void keyPress(unsigned char key, int x, int y)
@@ -114,6 +120,38 @@ void keyPress(unsigned char key, int x, int y)
       case 'D':
            keyStatus[(int)('d')] = 1; //Using keyStatus trick
            break;
+      case 'u':
+      case 'U':
+          keyStatus[(int)('u')] = 1;
+          if (p.getMovingZ()) {
+            cout << "esta movendo" << endl;
+          } else {
+            if (p.getSubmerge() == 1) {
+              animation_submerge_time = glutGet(GLUT_ELAPSED_TIME);
+              p.setMovingZ(true);
+              cout << "comecando a mover em " << animation_submerge_time << endl;
+            } else if (p.getSubmerge() == -1) {
+              for (Enemy e : enemies) {
+                if (collisionDetection(e.getPosX(),
+                                       e.getPosY(),
+                                       e.getRadius(),
+                                       p.getPosX(),
+                                       p.getPosY(),
+                                       p.getRadius())) {
+                                         p.setMovingZ(false);
+                                         cout << "UNDER ENEMY" << endl;
+                } else {
+                  animation_submerge_time = glutGet(GLUT_ELAPSED_TIME);
+                  p.setMovingZ(true);
+                  cout << "comecando a mover em " << animation_submerge_time << endl;
+                }
+
+              }
+            }
+          }
+          //p.setMovingZ(true);
+          //cout << p.getSubmerge() << endl;
+          break;
       case 27 :
            exit(0);
   }
@@ -122,25 +160,71 @@ void keyPress(unsigned char key, int x, int y)
 
 void idle(void)
 {
-    //Treat keyPress
-    if(keyStatus[(int)('a')])
-    {
-        p.MoveX(-0.01);
-    }
-    if(keyStatus[(int)('d')])
-    {
-        p.MoveX(0.01);
-    }
-    if(keyStatus[(int)('w')])
-    {
-        p.MoveY(0.01);
-    }
-    if(keyStatus[(int)('s')])
-    {
-        p.MoveY(-0.01);
-    }
+  //Treat keyPress
+  if(keyStatus[(int)('a')])
+  {
+    p.MoveX(-0.05);
+  }
+  if(keyStatus[(int)('d')])
+  {
+    p.MoveX(0.05);
+  }
+  if(keyStatus[(int)('w')])
+  {
+    p.MoveY(0.05);
+  }
+  if(keyStatus[(int)('s')])
+  {
+    p.MoveY(-0.05);
+  }
 
-    glutPostRedisplay();
+  // handling idle moves and collision
+
+  if(p.getMovingZ()) {
+    //p.submerge();
+    p.submergeTime(glutGet(GLUT_ELAPSED_TIME) - animation_submerge_time);
+  }
+
+  // verify collision with island
+  bool collisionTest = false;
+  for (Island i : islands) {
+    if (collisionDetection(i.getPosX(),
+                           i.getPosY(),
+                           i.getRadius(),
+                           p.getPosX(),
+                           p.getPosY(),
+                           p.getRadius())) {
+                             collisionTest = true;
+                           }
+  }
+
+  // verify collision with enemies
+  if (p.getSubmerge() == 1) {
+    for (Enemy e : enemies) {
+      if (collisionDetection(e.getPosX(),
+                             e.getPosY(),
+                             e.getRadius(),
+                             p.getPosX(),
+                             p.getPosY(),
+                             p.getRadius())) {
+                               collisionTest = true;
+                             }
+
+    }
+  }
+
+  // verify if leaves the world
+  if (sqrt(pow((p.getPosX()-world.getPosX()),2) + pow((p.getPosY()-world.getPosY()),2)) >= world.getRadius() - p.getRadius()) {
+    collisionTest = true;
+  }
+
+  if (collisionTest) {
+    cout << "PLAYER SHOULD NOT BE HERE" << endl;
+  } else {
+    cout << "OK!" << endl;
+  }
+
+  glutPostRedisplay();
 }
 
 
@@ -223,19 +307,13 @@ int main(int argc, char ** argv) {
         world.setPosY(cy);
         world.setRadius(r);
         world.setId(id);
-
-        cout << "ortho sera definido como" << endl;
-        cout << "left: " << (cx - r) << endl;
-        cout << "right: " << (cx + r) << endl;
-        cout << "top: " << cy + r << endl;
-        cout << "bottom: " << cy - r << endl;
-
 				break;
 			case str2int("red"):
 				// red em rgb: 1, 0, 0
 				rgb[0] = 1.0;
 				rgb[1] = 0.0;
 				rgb[2] = 0.0;
+        cy = 2*world.getPosY() - cy;
         enemies.push_back(Enemy(id, rgb, cx, cy, 0.0, r));
 				break;
 			case str2int("green"):
@@ -243,9 +321,11 @@ int main(int argc, char ** argv) {
 				rgb[0] = 0.0;
 				rgb[1] = 1.0;
 				rgb[2] = 0.0;
+        cy = 2*world.getPosY() - cy;
         p.setPosX(cx);
         p.setPosY(cy);
         p.setRadius(r);
+        p.setMaxRadius(r);
         p.setColor(rgb);
         p.setId(id);
 				cout << p.getPosX() << endl;
@@ -255,6 +335,8 @@ int main(int argc, char ** argv) {
 				rgb[0] = 0.0;
 				rgb[1] = 0.0;
 				rgb[2] = 0.0;
+
+        cy = 2*world.getPosY() - cy;
         islands.push_back(Island(id, rgb, cx, cy, 0.0, r));
 				break;
 			default:

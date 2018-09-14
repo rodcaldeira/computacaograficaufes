@@ -15,7 +15,11 @@ class Player {
   GLfloat pos_y;
   GLfloat pos_z;
   GLfloat radius;
+  GLfloat max_radius;
   GLfloat rgb[3];
+  GLint submergin_status; // 0 - ongoing // 1 - water level // -1 - submerged
+  bool can_move;
+  bool moving_z_axis;
 
 
 private:
@@ -31,6 +35,9 @@ public:
     rgb[0] = 0.0;
     rgb[1] = 1.0;
     rgb[2] = 0.0;
+    submergin_status = 1;
+    moving_z_axis = false;
+    can_move = true;
   }
 
   void Desenha() {
@@ -59,6 +66,10 @@ public:
 
   GLfloat getRadius();
 
+  void setMaxRadius(GLfloat r);
+
+  GLfloat getMaxRadius();
+
   void setColor(GLfloat colors[]);
 
   GLfloat * getColor();
@@ -66,6 +77,18 @@ public:
   void setId(GLint ident);
 
   GLint getId();
+
+  void setSubmerge(GLint i);
+
+  GLint getSubmerge();
+
+  void setMovingZ(bool f);
+
+  bool getMovingZ();
+
+  void submergeTime(int milisec);
+
+  void submerge();
 
 };
 #endif /* END Player_hpp */
