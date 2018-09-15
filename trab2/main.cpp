@@ -104,22 +104,27 @@ void init (void)
 void keyup(unsigned char key, int x, int y)
 {
   keyStatus[(int)(key)] = 0;
+  for (int i = 0; i < 4; i++) collision[i] = true;
   switch (key) {
     case 'w':
     case 'W':
       collision[0] = false;
+      keyStatus[(int)('w')] = 0;
       break;
     case 'd':
     case 'D':
       collision[1] = false;
+      keyStatus[(int)('d')] = 0;
       break;
     case 's':
     case 'S':
       collision[2] = false;
+      keyStatus[(int)('s')] = 0;
       break;
     case 'a':
     case 'A':
       collision[3] = false;
+      keyStatus[(int)('a')] = 0;
       break;
   }
   glutPostRedisplay();
@@ -127,7 +132,6 @@ void keyup(unsigned char key, int x, int y)
 
 bool canMove(GLfloat w, GLfloat d, GLfloat s, GLfloat a) {
   bool coll = false;
-  //cout << w << " " << d << " " << s << " " << a << endl;
   // verify collision with island
   for (Island i : islands) {
     if (collisionDetection(i.getPosX(),
@@ -135,10 +139,10 @@ bool canMove(GLfloat w, GLfloat d, GLfloat s, GLfloat a) {
                            i.getRadius(),
                            p.getPosX() + a + d,
                            p.getPosY() + w + s,
-                           p.getRadius())) {
-                             cout << "player will collide with island at " << i.getPosX() << " " << i.getPosY() << endl;
-                             coll = true;
-                           }
+                           p.getMaxRadius())) {
+    //   cout << "player will collide with island at " << i.getPosX() << " " << i.getPosY() << endl;
+       coll = true;
+     }
   }
 
   // verify collision with enemies
@@ -150,20 +154,17 @@ bool canMove(GLfloat w, GLfloat d, GLfloat s, GLfloat a) {
                              p.getPosX() + a + d,
                              p.getPosY() + w + s,
                              p.getRadius())) {
-                               cout << "player will collide with enemie at " << e.getPosX() << " " << e.getPosY() << endl;
-                               coll = true;
-                             }
-
+        // cout << "player will collide with enemie at " << e.getPosX() << " " << e.getPosY() << endl;
+         coll = true;
+       }
     }
   }
 
   // verify if leaves the world
-  if (sqrt(pow(((p.getPosX()+a+d)-world.getPosX()),2) + pow(((p.getPosY()+w+s)-world.getPosY()),2)) >= world.getRadius() - p.getRadius()) {
-    cout << "player tries to leave the world" << endl;
+  if (sqrt(pow(((p.getPosX()+a+d)-world.getPosX()),2) + pow(((p.getPosY()+w+s)-world.getPosY()),2)) >= world.getRadius() - p.getMaxRadius()) {
+    //cout << "player trying to leave the world" << endl;
     coll = true;
   }
-  if (coll) cout << "collision" << endl;
-  else cout << "no collision" << endl;
   return coll;
 }
 
@@ -174,31 +175,30 @@ void keyPress(unsigned char key, int x, int y)
   {
     case 'w':
     case 'W':
-      keyStatus[(int)('w')] = 1; //Using keyStatus trick
-      //canMove(0.05, 0.05, -0.05, -0.05);
+      keyStatus[(int)('w')] = 1;
       break;
     case 'd':
     case 'D':
-      keyStatus[(int)('d')] = 1; //Using keyStatus trick
+      keyStatus[(int)('d')] = 1;
       break;
     case 's':
     case 'S':
-      keyStatus[(int)('s')] = 1; //Using keyStatus trick
+      keyStatus[(int)('s')] = 1;
       break;
     case 'a':
     case 'A':
-      keyStatus[(int)('a')] = 1; //Using keyStatus trick
+      keyStatus[(int)('a')] = 1;
       break;
     case 'u':
     case 'U':
       keyStatus[(int)('u')] = 1;
       if (p.getMovingZ()) {
-        cout << "esta movendo" << endl;
+        //cout << "esta movendo" << endl;
       } else {
         if (p.getSubmerge() == 1) {
           animation_submerge_time = glutGet(GLUT_ELAPSED_TIME);
           p.setMovingZ(true);
-          cout << "comecando a mover em " << animation_submerge_time << endl;
+          //cout << "comecando a mover em " << animation_submerge_time << endl;
         } else if (p.getSubmerge() == -1) {
           bool is_under_enemy = false;
           for (Enemy e : enemies) {
@@ -209,18 +209,16 @@ void keyPress(unsigned char key, int x, int y)
                                    p.getPosY(),
                                    p.getMaxRadius())) {
               is_under_enemy = true;
-              cout << "UNDER ENEMY" << endl;
+              //cout << "UNDER ENEMY" << endl;
             }
           }
           if (!is_under_enemy) {
             animation_submerge_time = glutGet(GLUT_ELAPSED_TIME);
             p.setMovingZ(true);
-            cout << "comecando a mover em " << animation_submerge_time << endl;
+            //cout << "comecando a mover em " << animation_submerge_time << endl;
           }
         }
       }
-      //p.setMovingZ(true);
-      //cout << p.getSubmerge() << endl;
       break;
       case 27 :
            exit(0);
@@ -233,43 +231,29 @@ void idle(void)
   //Treat keyPress
   if(keyStatus[(int)('w')])
   {
-    collision[0] = canMove(0.06, 0.0, 0.0, 0.0);
+    collision[0] = canMove(0.05, 0.0, 0.0, 0.0);
     if (!collision[0]) p.MoveY(0.05);
-    //else cout << "cant W" << endl;
   }
   if(keyStatus[(int)('d')])
   {
-    collision[1] = canMove(0.0, 0.06, 0.0, 0.0);
+    collision[1] = canMove(0.0, 0.05, 0.0, 0.0);
     if (!collision[1]) p.MoveX(0.05);
-    //else cout << "cant D" << endl;
   }
   if(keyStatus[(int)('s')])
   {
-    collision[2] = canMove(0.0, 0.0, -0.06, 0.0);
+    collision[2] = canMove(0.0, 0.0, -0.05, 0.0);
     if (!collision[2]) p.MoveY(-0.05);
-    //else cout << "cant S" << endl;
   }
   if(keyStatus[(int)('a')])
   {
-    collision[3] = canMove(0.0, 0.0, 0.0, -0.06);
+    collision[3] = canMove(0.0, 0.0, 0.0, -0.05);
     if (!collision[3]) p.MoveX(-0.05);
-    //else cout << "cant A" << endl;
   }
-
   // handling idle moves and collision
 
   if(p.getMovingZ()) {
-    //p.submerge();
     p.submergeTime(glutGet(GLUT_ELAPSED_TIME) - animation_submerge_time);
   }
-
-
-/*
-  if (collisionTest) {
-    cout << "PLAYER SHOULD NOT BE HERE" << endl;
-  } else {
-    cout << "OK!" << endl;
-  }*/
 
   glutPostRedisplay();
 }
@@ -303,7 +287,8 @@ int main(int argc, char ** argv) {
 	tinyxml2::XMLDocument xml_doc_config;
 	tinyxml2::XMLDocument xml_svg_file;
 //	tinyxml2::XMLError e_result = xml_doc_config.LoadFile(path_to);
-  tinyxml2::XMLError e_result = xml_doc_config.LoadFile(path_to.c_str());
+  //tinyxml2::XMLError e_result =
+  xml_doc_config.LoadFile(path_to.c_str());
 
   tinyxml2::XMLNode * app_root = xml_doc_config.FirstChild();
 	if (app_root == nullptr) return tinyxml2::XML_ERROR_FILE_READ_ERROR;
@@ -324,9 +309,10 @@ int main(int argc, char ** argv) {
 	tmp_xml = app_ele->FirstChildElement("tipo");
 	if (tmp_xml == nullptr) return tinyxml2::XML_ERROR_PARSING_ELEMENT;
 	path_to_svg += tmp_xml->GetText();
-  cout << path_to_svg << endl;
+  //cout << path_to_svg << endl;
 // inicio da leitura do svg
-	e_result = xml_svg_file.LoadFile(path_to_svg.c_str());
+	//e_result =
+  xml_svg_file.LoadFile(path_to_svg.c_str());
 
 	app_root = xml_svg_file.FirstChildElement("svg");
 	tmp_xml = app_root->FirstChildElement("circle");
@@ -335,7 +321,6 @@ int main(int argc, char ** argv) {
 	GLfloat rgb[3];
 
 	while (tmp_xml != nullptr) {
-
 	  color = tmp_xml->Attribute("fill");
     double cx, cy, r;
     int id;
@@ -375,22 +360,18 @@ int main(int argc, char ** argv) {
         p.setMaxRadius(r);
         p.setColor(rgb);
         p.setId(id);
-				cout << p.getPosX() << endl;
 				break;
 			case str2int("black"):
 				// preto em rgb: 0, 0, 0
 				rgb[0] = 0.0;
 				rgb[1] = 0.0;
 				rgb[2] = 0.0;
-
         cy = 2*world.getPosY() - cy;
         islands.push_back(Island(id, rgb, cx, cy, 0.0, r));
 				break;
 			default:
 				break;
 		}
-
-
 		tmp_xml = tmp_xml->NextSiblingElement("circle");
 	}
 
