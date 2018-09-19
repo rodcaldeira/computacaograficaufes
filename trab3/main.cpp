@@ -231,22 +231,24 @@ void idle(void)
   if(keyStatus[(int)('w')])
   {
     collision[0] = canMove(0.05, 0.0, 0.0, 0.0);
-    if (!collision[0]) p.MoveY(0.05);
+    if (!collision[0]) p.Move(1);//p.MoveY(0.05);
   }
   if(keyStatus[(int)('d')])
   {
     collision[1] = canMove(0.0, 0.05, 0.0, 0.0);
-    if (!collision[1]) p.MoveX(0.05);
+    p.MoveLeme(+0.05);
+    //if (!collision[1]) p.MoveX(0.05);
   }
   if(keyStatus[(int)('s')])
   {
     collision[2] = canMove(0.0, 0.0, -0.05, 0.0);
-    if (!collision[2]) p.MoveY(-0.05);
+    if (!collision[2]) p.Move(-1); //p.MoveY(-0.05);
   }
   if(keyStatus[(int)('a')])
   {
     collision[3] = canMove(0.0, 0.0, 0.0, -0.05);
-    if (!collision[3]) p.MoveX(-0.05);
+    p.MoveLeme(-0.05);
+    //if (!collision[3]) p.MoveX(-0.05);
   }
   // handling idle moves and collision
 
@@ -254,6 +256,7 @@ void idle(void)
     p.submergeTime(glutGet(GLUT_ELAPSED_TIME) - animation_submerge_time);
   }
 
+  p.updatePlayer();
   glutPostRedisplay();
 }
 

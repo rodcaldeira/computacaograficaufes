@@ -254,7 +254,7 @@ void display(void)
       glColor3f(circle_RGB[0], circle_RGB[1], circle_RGB[2]);
       //v1[0] =
       glBegin(GL_POLYGON);
-      for(double i = 0; i < 2 * PI; i += PI / 12) //<-- Change this Value
+      for(double i = 0; i <= 2 * PI; i += PI) //<-- Change this Value
         glVertex3f(cos(i) * radius + pos[0], sin(i) * radius + pos[1], 0.0);
      glEnd();
   }
