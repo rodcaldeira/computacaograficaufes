@@ -28,6 +28,7 @@
 #include <math.h>
 #include "tinyxml2/tinyxml2.h"
 #include "submarine.h"
+#include "torpedo.h"
 #include "player.hpp"
 #include "world.hpp"
 #include "enemy.hpp"
@@ -37,6 +38,8 @@ using namespace std;
 string path_to_svg;
 Submarine::submarine p;
 Sea world;
+list<Torpedo> torpedos;
+list<Torpedo>::iterator tps, del_tps;
 list<Island> islands;
 list<Island>::iterator isl;
 list<Enemy> enemies;
