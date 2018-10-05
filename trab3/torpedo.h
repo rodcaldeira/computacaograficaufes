@@ -36,6 +36,7 @@ class Torpedo {
   GLfloat target_x;
   GLfloat target_y;
   GLfloat dist_target;
+  bool to_delete;
 
 private:
   void DesenhaTorpedo(GLfloat x, GLfloat y, GLfloat r, GLfloat cR, GLfloat cG, GLfloat cB);
@@ -66,10 +67,12 @@ public:
   void setTargetX(GLfloat x);
   GLfloat getTargetY();
   void setTargetY(GLfloat y);
+  bool getToDelete();
+  void setToDelete(bool status);
   GLfloat getDistTarget();
   void setDistTarget(GLfloat d);
 
-  void Move(GLdouble d);
+  void Move(GLdouble d, GLfloat vel_torpedo);
   void MoveX(GLfloat dx);
   void MoveY(GLfloat dy);
 

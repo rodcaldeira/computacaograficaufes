@@ -16,9 +16,25 @@ Torpedo::Torpedo(GLfloat x, GLfloat y, GLfloat tetha, GLfloat r, GLfloat t, GLfl
   radius = r; //setRadius(r);
   max_radius = 2*r; //setMaxRadius(2*r);
   type = t; //setType(t);
+  to_delete = false;
   if (t == 1) {
     target_x = mx; //setTargetX(mx);
     target_y = my; //setTargetY(my);
+    tetha_center = atan((my-y)/(mx-x))*180/M_PI;
+
+    if ((my > y) && (mx > x)) { // 1o quad
+      tetha_center = atan((my-y)/(mx-x))*180/M_PI;
+      std::cout << "1o quad " << tetha_center << std::endl;
+    } else if ((my > y) && (mx < x)) { // 2o quad
+      tetha_center = atan((my-y)/(mx-x))*180/M_PI + 180;
+      std::cout << "2o quad " << tetha_center << std::endl;
+    } else if ((my < y) && (mx < x)) { // 3o quad
+      tetha_center = atan((my-y)/(mx-x))*180/M_PI + 180;
+      std::cout << "3o quad " << tetha_center << std::endl;
+    } else { // 4o quad
+      tetha_center = atan((my-y)/(mx-x))*180/M_PI + 360;
+      std::cout << "4o quad " << tetha_center << std::endl;
+    }
     dist_target = sqrt(pow(x - mx, 2) + pow(y - my, 2)); //setDistTarget( sqrt(pow(x - mx, 2) + pow(y - my, 2)) );
   }
 }
@@ -115,6 +131,14 @@ void Torpedo::setTargetY(GLfloat y) {
   target_y = y;
 }
 
+bool Torpedo::getToDelete() {
+  return to_delete;
+}
+
+void Torpedo::setToDelete(bool status) {
+  to_delete = status;
+}
+
 GLfloat Torpedo::getDistTarget() {
   return dist_target;
 }
@@ -122,28 +146,6 @@ GLfloat Torpedo::getDistTarget() {
 void Torpedo::setDistTarget(GLfloat d) {
   dist_target = d;
 }
-
-void Torpedo::Move(GLdouble d) {
-  if (type == 1) { // flor d'agua movimento de lancamento de projetil
-    MoveX(d*cos(tetha_center));
-    MoveY(d*sin(tetha_center));
-    GLfloat actual_dist = sqrt( pow(pos_x - target_x, 2) + pow(pos_y - target_y, 2) );
-    GLfloat half_dist = getDistTarget()/2;
-    if (actual_dist < half_dist) { // subindo o Torpedo
-        // r + (mr - r)p
-        // r - rp + mrp
-        // (1 - p)r + mrp
-      setRadius( radius + (max_radius - radius)*(actual_dist/half_dist) );
-    } else { // descendo o Torpedo
-      actual_dist = abs(actual_dist - getDistTarget());
-      setRadius( radius - (max_radius - radius)*(actual_dist/half_dist) );
-    }
-  } else if (type == -1) { // underwater movimento retilinio uniforme
-    MoveX(d*cos(tetha_center));
-    MoveY(d*sin(tetha_center));
-  }
-}
-
 void Torpedo::MoveX(GLfloat dx) {
 	pos_x += dx;
 }
@@ -152,13 +154,38 @@ void Torpedo::MoveY(GLfloat dy) {
 	pos_y += dy;
 }
 
+void Torpedo::Move(GLdouble d, GLfloat vel_torpedo) {
+  //d *= 10;
+  if (type == 1) { // flor d'agua movimento de lancamento de projetil
+    MoveX(vel_torpedo*d*cos(tetha_center*M_PI/180));
+    MoveY(vel_torpedo*d*sin(tetha_center*M_PI/180));
+
+    GLfloat actual_dist = sqrt( pow(pos_x - target_x, 2) + pow(pos_y - target_y, 2) );
+    GLfloat half_dist = getDistTarget()/2;
+    if (dist_target - actual_dist < half_dist) { // subindo o Torpedo
+      if (radius < max_radius) {
+        radius = max_radius/2 + max_radius * (1 - actual_dist/dist_target);
+      }
+    } else { // descendo o Torpedo
+      if (radius > max_radius/2) {
+        radius = max_radius/2 + max_radius*(actual_dist/dist_target);
+        if (abs(pos_x - target_x) < 0.1 && (abs(pos_y - target_x))) to_delete = true;
+      }
+    }
+  } else if (type == -1) { // underwater movimento retilinio uniforme
+
+    MoveX(vel_torpedo*d*cos(tetha_center));
+    MoveY(vel_torpedo*d*sin(tetha_center));
+  }
+}
+
 void Torpedo::DesenhaTorpedo(GLfloat x, GLfloat y, GLfloat radius, GLfloat cR,
 		GLfloat cG, GLfloat cB) {
       if(type == -1) { // rect
         glPushMatrix();
           glTranslatef(x, y, 0.0);
-          glRotatef(tetha_center, 0, 0, 1);
-          DesenhaRect(center, radius, 2*radius, 0.0, 0.0, 0.0);
+          glRotatef(tetha_center*180/M_PI, 0, 0, 1);
+          DesenhaRect(center, 6*radius, radius, 0.0, 0.0, 0.0);
         glPopMatrix();
       } else { // circle
         glPushMatrix();

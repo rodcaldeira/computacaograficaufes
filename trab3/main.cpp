@@ -49,6 +49,7 @@ GLint janela_y;
 int animation_submerge_time;
 //Key status
 int keyStatus[256];
+bool* mouseStates = new bool[3];
 
 
 bool collisionTest = false;
@@ -71,6 +72,11 @@ bool collisionDetection(GLfloat x1, GLfloat y1, GLfloat r1, GLfloat x2, GLfloat 
   return false;
 }
 
+bool pointInsideCircle(GLfloat px, GLfloat py, GLfloat cx, GLfloat cy, GLfloat cr) {
+  if (sqrt( pow(px-cx, 2) + pow(py-cy, 2) ) < cr) return true;
+  return false;
+}
+
 void display(void)
 {
    /* Limpar todos os pixels  */
@@ -80,6 +86,7 @@ void display(void)
 
    world.Desenha();
    for (Island i : islands) i.Desenha();
+   for (Torpedo t : torpedos) t.Desenha();
    p.Desenha();
    for (Enemy e : enemies) e.Desenha();
    /* Não esperar! */
@@ -226,8 +233,61 @@ void keyPress(unsigned char key, int x, int y)
   glutPostRedisplay();
 }
 
+void mouse(int button, int state, int x, int y) {
+  GLint dx = world.getPosX() - world.getRadius();
+  GLint dy = world.getPosY() - world.getRadius();
+  y = glutGet(GLUT_WINDOW_HEIGHT) - y;
+  x += dx;
+  y += dy;
+  // std::cout << "(x, y)" << x << ", " << y << " | " << x+dx << ", " << y+dy << std::endl;
+  if (button == GLUT_LEFT_BUTTON && p.getSubmerginStatus() == -1) { // para frente
+    if (state == GLUT_DOWN) {
+      std::cout << p.getTethaCenter() << std::endl;
+      torpedos.push_back(Torpedo(p.getPosX(), p.getPosY(), p.getTethaCenter(), p.getRadius()/12, p.getSubmerginStatus(), x, y));
+    }
+  }
+  else if (button == GLUT_RIGHT_BUTTON && p.getSubmerginStatus() == 1) { // para cima
+    if (state == GLUT_DOWN) {
+      //mouseStates[]
+    } else {
+      torpedos.push_back(Torpedo(p.getPosX(), p.getPosY(), p.getTethaCenter(), p.getRadius()/12, p.getSubmerginStatus(), x, y));
+    }
+  }
+}
+
+void updateTorpedos(GLdouble timeDiff) {
+  for (tps = torpedos.begin(); tps != torpedos.end(); ++tps) {
+    tps->Move(timeDiff, p.getVelTiro());
+    if (sqrt(pow((tps->getPosX()-world.getPosX()),2) + pow((tps->getPosY()-world.getPosY()),2)) >= world.getRadius() - tps->getRadius()) {
+      tps->setToDelete(true);
+    }
+    if (tps->getType() == -1) { //retilinio
+      GLfloat px = tps->getPosX();
+      GLfloat py = tps->getPosY();
+      for (Island i : islands) {
+        if (pointInsideCircle(px, py, i.getPosX(), i.getPosY(), i.getRadius())) tps->setToDelete(true);
+      }
+      for (Enemy e : enemies) {
+        if (pointInsideCircle(px, py, e.getPosX(), e.getPosY(), e.getRadius())) tps->setToDelete(true);
+      }
+    }
+  }
+  del_tps = torpedos.begin();
+  tps = torpedos.begin();
+  while (tps != torpedos.end()) {
+    if (tps->getToDelete()) {
+      del_tps = tps;
+      tps++;
+      torpedos.erase(del_tps);
+
+    } else {
+      tps++;
+    }
+  }
+}
+
 void updatePlayer(GLdouble timeDiff) {
-  float dist = 0.1 * timeDiff;
+  float dist = p.getVel() * timeDiff;
   //Treat keyPress
   if(keyStatus[(int)('w')])
   {
@@ -303,6 +363,7 @@ void idle(void)
 	previousTime = currentTime;
 
 	updatePlayer(timeDiference);
+  updateTorpedos(timeDiference);
 
   glutPostRedisplay();
 }
@@ -428,6 +489,7 @@ int main(int argc, char ** argv) {
   glutKeyboardUpFunc(keyup);
   glutDisplayFunc(display);
   glutIdleFunc(idle);
+  glutMouseFunc(mouse);
   glutMainLoop();
 
 
