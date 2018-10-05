@@ -14,6 +14,9 @@ class Player {
   GLfloat pos_x;
   GLfloat pos_y;
   GLfloat pos_z;
+	GLfloat circ_pos_x;
+	GLfloat circ_pos_y;
+  GLfloat circ_pos_z;
   GLfloat radius;
   GLfloat max_radius;
   GLfloat rgb[3];
@@ -26,6 +29,9 @@ class Player {
   bool can_move;
   bool moving_z_axis;
 
+
+  GLfloat trajectory_x;
+  GLfloat trajectory_y;
 
 private:
   void DesenhaRect(GLint height, GLint width, GLfloat R, GLfloat G, GLfloat B);
@@ -55,6 +61,14 @@ public:
   void Desenha() {
     DesenhaPlayer(pos_x, pos_y, pos_z, radius, rgb[0], rgb[1], rgb[2]);
   }
+
+  void setTrajectoryX(GLfloat dx);
+
+  GLfloat getTrajectoryX();
+
+  void setTrajectoryY(GLfloat dy);
+
+  GLfloat getTrajectoryY();
 
   void Move(GLint dir);
 

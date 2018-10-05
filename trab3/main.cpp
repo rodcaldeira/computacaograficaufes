@@ -27,6 +27,7 @@
 #include <GL/glut.h>
 #include <math.h>
 #include "tinyxml2/tinyxml2.h"
+#include "submarine.h"
 #include "player.hpp"
 #include "world.hpp"
 #include "enemy.hpp"
@@ -34,7 +35,7 @@ using namespace std;
 
 // variaveis
 string path_to_svg;
-Player p;
+Submarine::submarine p;
 Sea world;
 list<Island> islands;
 list<Island>::iterator isl;
@@ -84,6 +85,10 @@ void display(void)
 
 void init (void)
 {
+  /* inicia estados do jogador */
+  p.setTethaHeli(0.0);
+  p.setTethaPaddle(0.0);
+
   /* selecionar cor de fundo (preto) */
   glClearColor (0.5, 0.5, 0.5, 0.0);
 
@@ -129,15 +134,35 @@ void keyup(unsigned char key, int x, int y)
   glutPostRedisplay();
 }
 
-bool canMove(GLfloat w, GLfloat d, GLfloat s, GLfloat a) {
+bool canMove(GLfloat d) {
+
+  GLfloat r;
+  GLfloat move_delta;
+  GLfloat cx, cy, c_angle, s_angle;
+  if (abs(p.getTethaPaddle()) < 0.02) {
+    cx = p.getPosX() + d*cos(p.getTethaCenter());
+    cy = p.getPosY() + d*sin(p.getTethaCenter());
+  } else {
+    r = p.getRadius()/tan(-p.getTethaPaddle());
+    move_delta = -d/r;
+
+    c_angle = -M_PI_2 + p.getTethaCenter();
+    s_angle = M_PI_2 + p.getTethaCenter() + move_delta;
+
+    cx = p.getPosX() + r*(cos(c_angle));
+    cy = p.getPosY() + r*(sin(c_angle));
+
+    cx += r*cos(s_angle);
+    cy += r*sin(s_angle);
+  }
   bool coll = false;
   // verify collision with island
   for (Island i : islands) {
     if (collisionDetection(i.getPosX(),
                            i.getPosY(),
                            i.getRadius(),
-                           p.getPosX() + a + d,
-                           p.getPosY() + w + s,
+                           cx,
+                           cy,
                            p.getMaxRadius())) {
     //   cout << "player will collide with island at " << i.getPosX() << " " << i.getPosY() << endl;
        coll = true;
@@ -145,14 +170,14 @@ bool canMove(GLfloat w, GLfloat d, GLfloat s, GLfloat a) {
   }
 
   // verify collision with enemies
-  if (p.getSubmerge() == 1) {
+  if (p.getSubmerginStatus() == 1) {
     for (Enemy e : enemies) {
       if (collisionDetection(e.getPosX(),
                              e.getPosY(),
                              e.getRadius(),
-                             p.getPosX() + a + d,
-                             p.getPosY() + w + s,
-                             p.getRadius())) {
+                             cx,
+                             cy,
+                             p.getMaxRadius())) {
         // cout << "player will collide with enemie at " << e.getPosX() << " " << e.getPosY() << endl;
          coll = true;
        }
@@ -160,7 +185,7 @@ bool canMove(GLfloat w, GLfloat d, GLfloat s, GLfloat a) {
   }
 
   // verify if leaves the world
-  if (sqrt(pow(((p.getPosX()+a+d)-world.getPosX()),2) + pow(((p.getPosY()+w+s)-world.getPosY()),2)) >= world.getRadius() - p.getMaxRadius()) {
+  if (sqrt(pow((cx-world.getPosX()),2) + pow((cy-world.getPosY()),2)) >= world.getRadius() - p.getMaxRadius()) {
     //cout << "player trying to leave the world" << endl;
     coll = true;
   }
@@ -191,33 +216,6 @@ void keyPress(unsigned char key, int x, int y)
     case 'u':
     case 'U':
       keyStatus[(int)('u')] = 1;
-      if (p.getMovingZ()) {
-        //cout << "esta movendo" << endl;
-      } else {
-        if (p.getSubmerge() == 1) {
-          animation_submerge_time = glutGet(GLUT_ELAPSED_TIME);
-          p.setMovingZ(true);
-          //cout << "comecando a mover em " << animation_submerge_time << endl;
-        } else if (p.getSubmerge() == -1) {
-          bool is_under_enemy = false;
-          for (Enemy e : enemies) {
-            if (collisionDetection(e.getPosX(),
-                                   e.getPosY(),
-                                   e.getRadius(),
-                                   p.getPosX(),
-                                   p.getPosY(),
-                                   p.getMaxRadius())) {
-              is_under_enemy = true;
-              //cout << "UNDER ENEMY" << endl;
-            }
-          }
-          if (!is_under_enemy) {
-            animation_submerge_time = glutGet(GLUT_ELAPSED_TIME);
-            p.setMovingZ(true);
-            //cout << "comecando a mover em " << animation_submerge_time << endl;
-          }
-        }
-      }
       break;
       case 27 :
            exit(0);
@@ -225,38 +223,84 @@ void keyPress(unsigned char key, int x, int y)
   glutPostRedisplay();
 }
 
-void idle(void)
-{
+void updatePlayer(GLdouble timeDiff) {
+  float dist = 0.1 * timeDiff;
   //Treat keyPress
   if(keyStatus[(int)('w')])
   {
-    collision[0] = canMove(0.05, 0.0, 0.0, 0.0);
-    if (!collision[0]) p.Move(1);//p.MoveY(0.05);
+    collision[0] = canMove(dist);
+    if (!collision[0]) p.Move(dist);
+    //if (!collision[0]) p.Move(1);//p.MoveY(0.05);
   }
   if(keyStatus[(int)('d')])
   {
-    collision[1] = canMove(0.0, 0.05, 0.0, 0.0);
-    p.MoveLeme(+0.05);
+    //collision[1] = canMove(dist);
+    p.RotateTethaPaddle(+0.05);
     //if (!collision[1]) p.MoveX(0.05);
   }
   if(keyStatus[(int)('s')])
   {
-    collision[2] = canMove(0.0, 0.0, -0.05, 0.0);
-    if (!collision[2]) p.Move(-1); //p.MoveY(-0.05);
+    collision[2] = canMove(-dist);
+    if (!collision[2]) p.Move(-dist); //p.MoveY(-0.05);
   }
   if(keyStatus[(int)('a')])
   {
-    collision[3] = canMove(0.0, 0.0, 0.0, -0.05);
-    p.MoveLeme(-0.05);
+    //collision[3] = canMove(dist);
+    p.RotateTethaPaddle(-0.05);
     //if (!collision[3]) p.MoveX(-0.05);
+  }
+  if(keyStatus[(int)('u')])
+  {
+    if (p.getMovingZAxis()) {
+      //cout << "esta movendo" << endl;
+    } else {
+      if (p.getSubmerginStatus() == 1) {
+        animation_submerge_time = glutGet(GLUT_ELAPSED_TIME);
+        p.setMovingZAxis(true);
+        //cout << "comecando a mover em " << animation_submerge_time << endl;
+      } else if (p.getSubmerginStatus() == -1) {
+        bool is_under_enemy = false;
+        for (Enemy e : enemies) {
+          if (collisionDetection(e.getPosX(),
+                                 e.getPosY(),
+                                 e.getRadius(),
+                                 p.getPosX(),
+                                 p.getPosY(),
+                                 p.getMaxRadius())) {
+            is_under_enemy = true;
+            //cout << "UNDER ENEMY" << endl;
+          }
+        }
+        if (!is_under_enemy) {
+          animation_submerge_time = glutGet(GLUT_ELAPSED_TIME);
+          p.setMovingZAxis(true);
+          //cout << "comecando a mover em " << animation_submerge_time << endl;
+        }
+      }
+    }
   }
   // handling idle moves and collision
 
-  if(p.getMovingZ()) {
-    p.submergeTime(glutGet(GLUT_ELAPSED_TIME) - animation_submerge_time);
+  if(p.getMovingZAxis()) {
+    p.submerge(glutGet(GLUT_ELAPSED_TIME) - animation_submerge_time);
   }
 
-  p.updatePlayer();
+  p.updateHeli();
+}
+
+void idle(void)
+{
+  static GLdouble previousTime = 0;
+	GLdouble currentTime;
+	GLdouble timeDiference;
+
+	// Elapsed time from the initiation of the game
+	currentTime = glutGet(GLUT_ELAPSED_TIME);
+	timeDiference = currentTime - previousTime; // elapsed time from the previous frame
+	previousTime = currentTime;
+
+	updatePlayer(timeDiference);
+
   glutPostRedisplay();
 }
 
@@ -294,6 +338,13 @@ int main(int argc, char ** argv) {
 	tmp_xml = app_ele->FirstChildElement("tipo");
 	if (tmp_xml == nullptr) return tinyxml2::XML_ERROR_PARSING_ELEMENT;
 	path_to_svg += tmp_xml->GetText();
+
+  app_ele = app_root->FirstChildElement("jogador");
+  double tmp;
+  app_ele->QueryDoubleAttribute("velTiro", &tmp);
+  p.setVelTiro(tmp);
+  app_ele->QueryDoubleAttribute("vel", &tmp);
+  p.setVel(tmp);
   //cout << path_to_svg << endl;
 // inicio da leitura do svg
 	//e_result =
@@ -343,7 +394,10 @@ int main(int argc, char ** argv) {
         p.setPosY(cy);
         p.setRadius(r);
         p.setMaxRadius(r);
-        p.setColor(rgb);
+        //p.setColor(rgb);
+        p.setR(rgb[0]);
+        p.setG(rgb[1]);
+        p.setB(rgb[2]);
         p.setId(id);
 				break;
 			case str2int("black"):

@@ -50,7 +50,8 @@ void Player::DesenhaPlayer(GLfloat x, GLfloat y, GLfloat z, GLfloat radius, GLfl
 //void Player::DesenhaPlayer(GLfloat x, GLfloat y, GLfloat thetaWheel, GLfloat theta1, GLfloat theta2, GLfloat theta3) {
   glPushMatrix();
     glTranslatef(x, y, 0.0);
-    glRotatef(tethaSub, 0, 0, 1);
+    //glRotatef(tethaSub, 0, 0, 1);
+
     DesenhaCircle(x, y, radius, 0.8, 0.8, 0.8);
     DesenhaElipse(x, y, radius/2.5, radius, 0.0, 0.7, 0.0);
     glPushMatrix();
@@ -88,6 +89,17 @@ void Player::DesenhaPlayer(GLfloat x, GLfloat y, GLfloat z, GLfloat radius, GLfl
       glTranslatef(0.0, (radius - radius/6), 0.0);
       DesenhaCircle(0.0, 0.0, radius/10, 0.0, 0.0, 0.0);
     glPopMatrix();
+    glPushMatrix();
+      glTranslatef(radius/(2*tan( (90-tethaLeme)*PI/180 )), 0.0, 0.0);
+      glColor3f(0.0, 0.0, 0.0);
+      glPointSize(3);
+      glBegin(GL_POINTS);
+        glVertex3f(0.0, 0.0, 0);
+      glEnd();
+
+      glRotatef(tethaLeme, 0, 0, 1);
+      //DesenhaCircle(0.0, 0.0, sqrt(pow(pos_x - trajectory_x, 2) + pow(pos_y - trajectory_y, 2)), 0.9, 0.0, 0.3);
+    glPopMatrix();
 
   glPopMatrix();
 }
@@ -95,24 +107,60 @@ void Player::DesenhaPlayer(GLfloat x, GLfloat y, GLfloat z, GLfloat radius, GLfl
 //     frontWheel.y += 0;
 //     frontWheel.z += carSpeed*(sin(carHeading+steeringAngle));
 
+
+void Player::setTrajectoryX(GLfloat dx) {
+  trajectory_x = dx;
+}
+
+GLfloat Player::getTrajectoryX() {
+  return trajectory_x;
+}
+
+void Player::setTrajectoryY(GLfloat dy) {
+  trajectory_y = dy;
+}
+
+GLfloat Player::getTrajectoryY() {
+  return trajectory_y;
+}
+
 void Player::Move(GLint dir) {
+  double r = sqrt( pow(pos_x - trajectory_x, 2) + pow(pos_y - trajectory_y, 2));
+  double delta = vel/r;
+  delta = delta*(PI/180);
+  tethaSub += dir*asin(delta);
+
+  if (abs(tethaSub - tethaLeme) == 0.0) {
+    MoveY(pos_y + vel);
+  }
+  std::cout << "r " << r <<
+            " vel " << vel <<
+            " delta " << delta <<
+            " asin(delta) " << asin(delta) <<
+            " acos(delta) " << acos(delta) <<
+            " tethaSub " << tethaSub << std::endl;
+
+  MoveX(trajectory_x + r*cos(tethaSub));
+  MoveY(trajectory_y + r*sin(tethaSub));
+  // double cat_opo = abs(pos_y - trajectory_y);
+  // double cat_adj = abs(pos_x - trajectory_x);
   if (dir == 1) { // move forward
-    MoveX(vel*(cos(tethaSub+tethaLeme)));
-    MoveY(vel*(sin(tethaSub+tethaLeme)));
+    std::cout << "move clockwise" << std::endl;
   } else if (dir == -1) { // move backwards
-    MoveX(-vel*(cos(tethaSub+tethaLeme)));
-    MoveY(-vel*(sin(tethaSub+tethaLeme)));
+    std::cout << "move counter-clockwise" << std::endl;
   }
 }
 
 void Player::MoveX(GLfloat dx) {
   tethaHeli += 0.04;
-  pos_x += dx;
+  pos_x = dx;
+  //pos_x += dx;
 }
 
 void Player::MoveY(GLfloat dy) {
   tethaHeli += 0.04;
-  pos_y += dy;
+  pos_y = dy;
+//  pos_y += dy;
 }
 
 void Player::MoveZ(GLfloat dz) {
@@ -140,7 +188,38 @@ GLfloat Player::getVel() {
 }
 
 void Player::MoveLeme(GLfloat a) {
-  if (abs(tethaLeme + a) <= 45) tethaLeme += a;
+
+  if (abs(tethaLeme + a) <= 45) {
+
+    tethaLeme += a;
+  }
+  std::cout << "radius:" << radius << " "
+            << "pos_x " << pos_x << " "
+            << "pos_y " << pos_y << " "
+            << "tSub rad " << tethaSub*PI/180 << " "
+            << "sinr(tSub)" << sin(tethaSub*PI/180) << " "
+            << "cosr(tSub)" << cos(tethaSub*PI/180) << std::endl;
+  double alfaSub = tethaSub*PI/180;
+  double alfaLeme = (tethaSub + tethaLeme)*PI/180;
+  double x_leme = sin(tethaSub*PI/180)*radius+pos_x;
+  double y_leme = cos(tethaSub*PI/180)*radius+pos_y;
+
+  double m_sub = tan(alfaSub);
+  double m_leme = tan(alfaLeme);
+
+  trajectory_x = (y_leme - pos_y - m_leme*x_leme + m_sub*pos_x) / (m_sub - m_leme);
+  trajectory_y = m_leme * (trajectory_x - x_leme) + y_leme;
+  std::cout << pos_x << " " << pos_y << std::endl;
+  std::cout << x_leme << " " << y_leme << std::endl;
+  std::cout << trajectory_x << " " << trajectory_y << std::endl;
+  //trajectory_x = radius/(2*tan( (90-tethaLeme)*PI/180 ));
+    // if (tethaLeme == 0.0) {
+    //   trajectory_x = 10000.0;
+    // } else {
+    //
+    //   trajectory_x = radius/(2*tan( (90-tethaLeme)*PI/180 ));
+    // }
+  //std::cout << tethaLeme << " " << trajectory_x << " " << radius/(2*tan( (90-tethaLeme)*PI/180 )) << std::endl;
 }
 
 void Player::setTethaLeme(GLfloat t) {
