@@ -10,32 +10,31 @@
 #include <iostream>
 
 Torpedo::Torpedo(GLfloat x, GLfloat y, GLfloat tetha, GLfloat r, GLfloat t, GLfloat mx, GLfloat my) {
-  pos_x = x; // setPosX(x);
-  pos_y = y; //setPosY(y);
   tetha_center = tetha; //setTethaCenter(tetha);
   radius = r; //setRadius(r);
   max_radius = 2*r; //setMaxRadius(2*r);
   type = t; //setType(t);
   to_delete = false;
   if (t == 1) {
+    pos_x = x + (radius - radius/5)*cos(tetha); // setPosX(x);
+    pos_y = y + (radius - radius/5)*sin(tetha); //setPosY(y);
     target_x = mx; //setTargetX(mx);
     target_y = my; //setTargetY(my);
     tetha_center = atan((my-y)/(mx-x))*180/M_PI;
 
     if ((my > y) && (mx > x)) { // 1o quad
       tetha_center = atan((my-y)/(mx-x))*180/M_PI;
-      std::cout << "1o quad " << tetha_center << std::endl;
     } else if ((my > y) && (mx < x)) { // 2o quad
       tetha_center = atan((my-y)/(mx-x))*180/M_PI + 180;
-      std::cout << "2o quad " << tetha_center << std::endl;
     } else if ((my < y) && (mx < x)) { // 3o quad
       tetha_center = atan((my-y)/(mx-x))*180/M_PI + 180;
-      std::cout << "3o quad " << tetha_center << std::endl;
     } else { // 4o quad
       tetha_center = atan((my-y)/(mx-x))*180/M_PI + 360;
-      std::cout << "4o quad " << tetha_center << std::endl;
     }
     dist_target = sqrt(pow(x - mx, 2) + pow(y - my, 2)); //setDistTarget( sqrt(pow(x - mx, 2) + pow(y - my, 2)) );
+  } else {
+    pos_x = x - (radius / 6)*cos(tetha); // setPosX(x);
+    pos_y = y - (radius / 6)*sin(tetha); //setPosY(y);
   }
 }
 

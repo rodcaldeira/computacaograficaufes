@@ -29,7 +29,7 @@
 #include "tinyxml2/tinyxml2.h"
 #include "submarine.h"
 #include "torpedo.h"
-#include "player.hpp"
+#include "cursor.h"
 #include "world.hpp"
 #include "enemy.hpp"
 using namespace std;
@@ -38,6 +38,7 @@ using namespace std;
 string path_to_svg;
 Submarine::submarine p;
 Sea world;
+Cursor mouse_info;
 list<Torpedo> torpedos;
 list<Torpedo>::iterator tps, del_tps;
 list<Island> islands;
@@ -89,6 +90,9 @@ void display(void)
    for (Torpedo t : torpedos) t.Desenha();
    p.Desenha();
    for (Enemy e : enemies) e.Desenha();
+   if (mouseStates[GLUT_RIGHT_BUTTON]) {
+     mouse_info.Desenha();
+   }
    /* Não esperar! */
    glutSwapBuffers ();
 }
@@ -174,7 +178,6 @@ bool canMove(GLfloat d) {
                            cx,
                            cy,
                            p.getMaxRadius())) {
-    //   cout << "player will collide with island at " << i.getPosX() << " " << i.getPosY() << endl;
        coll = true;
      }
   }
@@ -188,7 +191,6 @@ bool canMove(GLfloat d) {
                              cx,
                              cy,
                              p.getMaxRadius())) {
-        // cout << "player will collide with enemie at " << e.getPosX() << " " << e.getPosY() << endl;
          coll = true;
        }
     }
@@ -196,7 +198,6 @@ bool canMove(GLfloat d) {
 
   // verify if leaves the world
   if (sqrt(pow((cx-world.getPosX()),2) + pow((cy-world.getPosY()),2)) >= world.getRadius() - p.getMaxRadius()) {
-    //cout << "player trying to leave the world" << endl;
     coll = true;
   }
   return coll;
@@ -239,20 +240,34 @@ void mouse(int button, int state, int x, int y) {
   y = glutGet(GLUT_WINDOW_HEIGHT) - y;
   x += dx;
   y += dy;
-  // std::cout << "(x, y)" << x << ", " << y << " | " << x+dx << ", " << y+dy << std::endl;
   if (button == GLUT_LEFT_BUTTON && p.getSubmerginStatus() == -1) { // para frente
     if (state == GLUT_DOWN) {
-      std::cout << p.getTethaCenter() << std::endl;
       torpedos.push_back(Torpedo(p.getPosX(), p.getPosY(), p.getTethaCenter(), p.getRadius()/12, p.getSubmerginStatus(), x, y));
     }
   }
   else if (button == GLUT_RIGHT_BUTTON && p.getSubmerginStatus() == 1) { // para cima
     if (state == GLUT_DOWN) {
-      //mouseStates[]
+      mouse_info.setPosX(x);
+      mouse_info.setPosY(y);
+      mouseStates[button] = true;
+
     } else {
+      mouseStates[button] = false;
       torpedos.push_back(Torpedo(p.getPosX(), p.getPosY(), p.getTethaCenter(), p.getRadius()/12, p.getSubmerginStatus(), x, y));
     }
   }
+}
+
+void dragAndDrop(int x, int y) {
+  GLint dx = world.getPosX() - world.getRadius();
+  GLint dy = world.getPosY() - world.getRadius();
+  y = glutGet(GLUT_WINDOW_HEIGHT) - y;
+  x += dx;
+  y += dy;
+
+  mouse_info.setPosX(x);
+  mouse_info.setPosY(y);
+  glutPostRedisplay();
 }
 
 void updateTorpedos(GLdouble timeDiff) {
@@ -293,13 +308,10 @@ void updatePlayer(GLdouble timeDiff) {
   {
     collision[0] = canMove(dist);
     if (!collision[0]) p.Move(dist);
-    //if (!collision[0]) p.Move(1);//p.MoveY(0.05);
   }
   if(keyStatus[(int)('d')])
   {
-    //collision[1] = canMove(dist);
     p.RotateTethaPaddle(+0.05);
-    //if (!collision[1]) p.MoveX(0.05);
   }
   if(keyStatus[(int)('s')])
   {
@@ -308,9 +320,7 @@ void updatePlayer(GLdouble timeDiff) {
   }
   if(keyStatus[(int)('a')])
   {
-    //collision[3] = canMove(dist);
     p.RotateTethaPaddle(-0.05);
-    //if (!collision[3]) p.MoveX(-0.05);
   }
   if(keyStatus[(int)('u')])
   {
@@ -331,13 +341,11 @@ void updatePlayer(GLdouble timeDiff) {
                                  p.getPosY(),
                                  p.getMaxRadius())) {
             is_under_enemy = true;
-            //cout << "UNDER ENEMY" << endl;
           }
         }
         if (!is_under_enemy) {
           animation_submerge_time = glutGet(GLUT_ELAPSED_TIME);
           p.setMovingZAxis(true);
-          //cout << "comecando a mover em " << animation_submerge_time << endl;
         }
       }
     }
@@ -463,6 +471,7 @@ int main(int argc, char ** argv) {
         p.setG(rgb[1]);
         p.setB(rgb[2]);
         p.setId(id);
+        mouse_info.setRadius(r);
 				break;
 			case str2int("black"):
 				// preto em rgb: 0, 0, 0
@@ -490,6 +499,7 @@ int main(int argc, char ** argv) {
   glutDisplayFunc(display);
   glutIdleFunc(idle);
   glutMouseFunc(mouse);
+  glutMotionFunc(dragAndDrop);
   glutMainLoop();
 
 

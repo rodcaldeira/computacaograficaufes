@@ -217,38 +217,38 @@ void submarine::DesenhaSubmarine(GLfloat x, GLfloat y, GLfloat radius, GLfloat c
 		DesenhaCircle(0.0, 0.0, radius, radius / 3, cR, cG, cB, 360); // ellipse of submarine
 		glPushMatrix();
 			glTranslatef(0.0, -radius / 3, 0.0);
-			DesenhaRect(center, radius / 3, radius / 5, 0.0, 0.0, 0.0); // black side1
+			DesenhaRect(center, radius / 3, radius / 5, 0.0, 0.0, cB*0.5); // black side1
 		glPopMatrix();
 		glPushMatrix();
 			glTranslatef(0.0, radius/3, 0.0);
-			DesenhaRect(center, radius / 3, radius / 5, 0.0, 0.0, 0.0); // black side2
+			DesenhaRect(center, radius / 3, radius / 5, 0.0, 0.0, cB*0.5); // black side2
 		glPopMatrix();
 		glPushMatrix();
 			glTranslatef(radius - radius / 5, 0.0, 0.0);
-			DesenhaCircle(0.0, 0.0, radius/12, radius/12, 0.0, 0.0, 0.0, 360); // underwater torpedo
+			DesenhaCircle(0.0, 0.0, radius/12, radius/12, 0.0, 0.0, cB*0.5, 360); // underwater torpedo
 		glPopMatrix();
 		glPushMatrix();
 			glTranslatef(0.0, - radius / 6, 0.0);
-			DesenhaCircle(0.0, 0.0, radius/12, radius/12, 1.0, 0.0, 0.0, 360); // overwater torpedo
+			DesenhaCircle(0.0, 0.0, radius/12, radius/12, 1.0, 0.0, cB, 360); // overwater torpedo
 		glPopMatrix();
 		glPushMatrix();
 			glTranslatef(-radius, 0.0, 0.0);
 			glRotatef(tetha_paddle * (180 / M_PI), 0, 0, 1);
-			DesenhaRect(right_center, radius / 4, radius / 10, 0.0, 0.0, 0.0);
+			DesenhaRect(right_center, radius / 4, radius / 10, 0.0, 0.0, cB*0.5);
 		glPopMatrix();
 		glPushMatrix();
 			glTranslatef(-radius, 0.0, 0.0);
 			glRotatef(90, 0, 0, 1);
 			glRotatef(tetha_heli, 0, 1, 0); // rotation moving
 			glRotatef(45, 1, 0, 0); // rotation for further usage (3d inclination of helipad)
-			DesenhaTriangle(0.0, 0.0, radius/2, 1.0, 1.0, 0.0);
+			DesenhaTriangle(0.0, 0.0, radius/2, 1.0, 1.0, cB*0.5);
 		glPopMatrix();
 		glPushMatrix();
 			glTranslatef(-radius, 0.0, 0.0);
 			glRotatef(90, 0, 0, 1);
 			glRotatef(tetha_heli, 0, 1, 0); // rotation for moving
 			glRotatef(45, 1, 0, 0); // rotation for further usage (3d inclination of helipad)
-			DesenhaTriangle(0.0, 0.0, -radius/2, 1.0, 1.0, 0.0);
+			DesenhaTriangle(0.0, 0.0, -radius/2, 1.0, 1.0, cB*0.5);
 		glPopMatrix();
 	glPopMatrix();
 }
