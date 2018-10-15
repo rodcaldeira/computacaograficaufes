@@ -31,6 +31,7 @@ class submarine {
 
 	GLfloat pos_x;
 	GLfloat pos_y;
+	GLfloat pos_z;
 	GLfloat radius;
   GLfloat max_radius;
 	GLfloat direction_sub_x;
@@ -41,7 +42,6 @@ class submarine {
 	GLfloat tetha_paddle;
 	GLfloat tetha_heli;
 
-  GLfloat pos_z;
   GLfloat velTiro;
   GLfloat vel;
   bool can_move;
@@ -72,8 +72,6 @@ public:
 	void setDirectionSubY(GLfloat directionSubY);
   GLint getSubmerginStatus() const;
   void setSubmerginStatus(GLint i);
-  GLfloat getPosZ() const;
-  void setPosZ(GLfloat posZ);
   GLfloat getVelTiro() const;
   void setVelTiro(GLfloat vel_tiro);
   GLfloat getVel() const;
@@ -88,6 +86,8 @@ public:
 	void setPosX(GLfloat posX);
 	GLfloat getPosY() const;
 	void setPosY(GLfloat posY);
+	GLfloat getPosZ() const;
+	void setPosZ(GLfloat posZ);
 	GLfloat getRadius() const;
 	void setRadius(GLfloat radius);
   GLfloat getMaxRadius() const;
@@ -99,7 +99,7 @@ public:
 	GLfloat getTethaPaddle() const;
 	void setTethaPaddle(GLfloat tethaPaddle);
 
-
+	bool checkHit(GLfloat x, GLfloat y, GLfloat z);
 	void Move(GLdouble d);
 	void MoveX(GLfloat dx);
 	void MoveY(GLfloat dy);

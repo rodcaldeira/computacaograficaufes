@@ -43,8 +43,8 @@ list<Torpedo> torpedos;
 list<Torpedo>::iterator tps, del_tps;
 list<Island> islands;
 list<Island>::iterator isl;
-list<Enemy> enemies;
-list<Enemy>::iterator enmy, del_enemy;
+list<Submarine::submarine> enemies;
+list<Submarine::submarine>::iterator enmy, del_enemy;
 GLint janela_x;
 GLint janela_y;
 int animation_submerge_time;
@@ -89,7 +89,7 @@ void display(void)
    for (Island i : islands) i.Desenha();
    for (Torpedo t : torpedos) t.Desenha();
    p.Desenha();
-   for (Enemy e : enemies) e.Desenha();
+   for (Submarine::submarine e : enemies) e.Desenha();
    if (mouseStates[GLUT_RIGHT_BUTTON]) {
      mouse_info.Desenha();
    }
@@ -184,7 +184,7 @@ bool canMove(GLfloat d) {
 
   // verify collision with enemies
   if (p.getSubmerginStatus() == 1) {
-    for (Enemy e : enemies) {
+    for (Submarine::submarine e : enemies) {
       if (collisionDetection(e.getPosX(),
                              e.getPosY(),
                              e.getRadius(),
@@ -282,7 +282,7 @@ void updateTorpedos(GLdouble timeDiff) {
       for (Island i : islands) {
         if (pointInsideCircle(px, py, i.getPosX(), i.getPosY(), i.getRadius())) tps->setToDelete(true);
       }
-      for (Enemy e : enemies) {
+      for (Submarine::submarine e : enemies) {
         if (pointInsideCircle(px, py, e.getPosX(), e.getPosY(), e.getRadius())) tps->setToDelete(true);
       }
     }
@@ -333,7 +333,7 @@ void updatePlayer(GLdouble timeDiff) {
         //cout << "comecando a mover em " << animation_submerge_time << endl;
       } else if (p.getSubmerginStatus() == -1) {
         bool is_under_enemy = false;
-        for (Enemy e : enemies) {
+        for (Submarine::submarine e : enemies) {
           if (collisionDetection(e.getPosX(),
                                  e.getPosY(),
                                  e.getRadius(),
@@ -359,6 +359,22 @@ void updatePlayer(GLdouble timeDiff) {
   p.updateHeli();
 }
 
+void updateEnemies(GLdouble timeDiff) {
+  for (enmy = enemies.begin(); enmy != enemies.end(); ++enmy) {
+
+    if (enmy->getSubmerginStatus() == 1) {
+      animation_submerge_time = glutGet(GLUT_ELAPSED_TIME);
+      enmy->setMovingZAxis(true);
+      enmy->submerge(glutGet(GLUT_ELAPSED_TIME) - animation_submerge_time);
+    }
+
+
+
+    enmy->updateHeli();
+  }
+}
+
+
 void idle(void)
 {
   static GLdouble previousTime = 0;
@@ -372,6 +388,7 @@ void idle(void)
 
 	updatePlayer(timeDiference);
   updateTorpedos(timeDiference);
+  updateEnemies(timeDiference);
 
   glutPostRedisplay();
 }
@@ -436,6 +453,8 @@ int main(int argc, char ** argv) {
     tmp_xml->QueryDoubleAttribute("cx", &cx);
     tmp_xml->QueryDoubleAttribute("cy", &cy);
     tmp_xml->QueryDoubleAttribute("r", &r);
+
+    Submarine::submarine new_enmy;
 		switch (str2int(color)) {
 			case str2int("blue"):
 				// azul em rgb: 0, 0, 1
@@ -450,11 +469,24 @@ int main(int argc, char ** argv) {
 				break;
 			case str2int("red"):
 				// red em rgb: 1, 0, 0
+        // enemies.push_back(Submarine::submarine());
+        // enmy = enemies.end();
+        new_enmy.setR(1.0);
+        new_enmy.setG(0.0);
+        new_enmy.setB(0.0);
+        new_enmy.setPosX(cx);
+        new_enmy.setPosY(2*world.getPosY() - cy);
+        new_enmy.setPosZ(0.0);
+        new_enmy.setId(id);
+        new_enmy.setRadius(r);
+        new_enmy.setMaxRadius(r);
+        new_enmy.setSubmerginStatus(1);
 				rgb[0] = 1.0;
 				rgb[1] = 0.0;
 				rgb[2] = 0.0;
         cy = 2*world.getPosY() - cy;
-        enemies.push_back(Enemy(id, rgb, cx, cy, 0.0, r));
+        enemies.push_back(new_enmy);
+        //enemies.push_back(Enemy(id, rgb, cx, cy, 0.0, r));
 				break;
 			case str2int("green"):
 				// verde em rgb: 0, 0, 1
@@ -486,7 +518,6 @@ int main(int argc, char ** argv) {
 		}
 		tmp_xml = tmp_xml->NextSiblingElement("circle");
 	}
-
   int tamanhoDaJanela = ceil(world.getRadius()*2);
   glutInit(&argc, argv);
   glutInitDisplayMode (GLUT_DOUBLE | GLUT_RGB);

@@ -108,6 +108,14 @@ void submarine::setPosY(GLfloat posY) {
 	pos_y = posY;
 }
 
+GLfloat submarine::getPosZ() const {
+	return pos_z;
+}
+
+void submarine::setPosZ(GLfloat posZ) {
+	pos_z = posZ;
+}
+
 GLfloat submarine::getRadius() const {
 	return radius;
 }
@@ -155,6 +163,17 @@ void submarine::setTethaPaddle(GLfloat tethaPaddle) {
 
 submarine::~submarine() {
 	// TODO Auto-generated destructor stub
+}
+
+bool submarine::checkHit(GLfloat x, GLfloat y, GLfloat z) {
+	if (
+		sqrt(
+			pow(pos_x - x, 2) +
+			pow(pos_y - y, 2) +
+			pow(pos_z - z, 2)
+		)
+	) return true;
+	return false;
 }
 
 void submarine::Move(GLdouble d) {
@@ -356,14 +375,6 @@ void submarine::RotateTethaPaddle(GLfloat ang) {
 		setDirectionSubX(cos(tetha_paddle));
 		setDirectionSubY(sin(tetha_paddle));
 	}
-}
-
-GLfloat submarine::getPosZ() const {
-	return pos_z;
-}
-
-void submarine::setPosZ(GLfloat posZ) {
-	pos_z = posZ;
 }
 
 GLfloat submarine::getVelTiro() const {
