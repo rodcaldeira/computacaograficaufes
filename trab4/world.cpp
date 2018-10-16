@@ -11,11 +11,12 @@ void Island::DesenhaCircle(GLfloat x, GLfloat y, GLfloat rad, GLfloat R, GLfloat
   glEnd();
 }
 
-void Island::DesenhaIsland(GLfloat x, GLfloat y, GLfloat pos_z, GLfloat radius, GLfloat R, GLfloat G, GLfloat B) {
+void Island::DesenhaIsland(GLfloat x, GLfloat y, GLfloat pos_z, GLfloat radius, GLfloat tower_radius, GLfloat R, GLfloat G, GLfloat B) {
 //void Player::DesenhaPlayer(GLfloat x, GLfloat y, GLfloat thetaWheel, GLfloat theta1, GLfloat theta2, GLfloat theta3) {
   glPushMatrix();
     glTranslatef(x, y, 0.0);
     DesenhaCircle(x, y, radius, R, G, B);
+    DesenhaCircle(x, y, tower_radius, 1.0, 1.0, 0.0);
   glPopMatrix();
 }
 
@@ -66,6 +67,15 @@ void Island::setId(GLint ident) {
 GLint Island::getId() {
   return id;
 }
+
+void Island::setTowerPerc(GLfloat s) {
+  tower_perc = s;
+}
+
+GLfloat Island::getTowerPerc() {
+  return tower_perc;
+}
+  
 
 void Sea::DesenhaCircle(GLfloat x, GLfloat y, GLfloat rad, GLfloat R, GLfloat G, GLfloat B) {
   glColor3f(R, G, B);

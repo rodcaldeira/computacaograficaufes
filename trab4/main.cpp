@@ -47,6 +47,10 @@ list<Submarine::submarine> enemies;
 list<Submarine::submarine>::iterator enmy, del_enemy;
 GLint janela_x;
 GLint janela_y;
+GLfloat tower_size;
+GLfloat enemy_shot_freq;
+GLfloat enemy_vel;
+GLfloat enemy_vel_tiro;
 int animation_submerge_time;
 //Key status
 int keyStatus[256];
@@ -364,6 +368,7 @@ void updateEnemies(GLdouble timeDiff) {
 
     if (enmy->getSubmerginStatus() == 1) {
       animation_submerge_time = glutGet(GLUT_ELAPSED_TIME);
+      enmy->setSubmerginStatus(-1);
       enmy->setMovingZAxis(true);
       enmy->submerge(glutGet(GLUT_ELAPSED_TIME) - animation_submerge_time);
     }
@@ -434,6 +439,20 @@ int main(int argc, char ** argv) {
   p.setVelTiro(tmp);
   app_ele->QueryDoubleAttribute("vel", &tmp);
   p.setVel(tmp);
+  // leitura dados do inimigo
+  app_ele = app_root->FirstChildElement("inimigo");
+  app_ele->QueryDoubleAttribute("freqTiro", &tmp);
+  enemy_shot_freq = tmp;
+  app_ele->QueryDoubleAttribute("vel", &tmp);
+  enemy_vel = tmp;
+  app_ele->QueryDoubleAttribute("velTiro", &tmp);
+  enemy_vel_tiro = tmp;
+
+  // leitura dados da torre
+  app_ele = app_root->FirstChildElement("torre");
+  app_ele->QueryDoubleAttribute("tamanho", &tmp);
+  tower_size = tmp;
+
   //cout << path_to_svg << endl;
 // inicio da leitura do svg
 	//e_result =
@@ -481,6 +500,8 @@ int main(int argc, char ** argv) {
         new_enmy.setRadius(r);
         new_enmy.setMaxRadius(r);
         new_enmy.setSubmerginStatus(1);
+        new_enmy.setVel(enemy_vel);
+        new_enmy.setVelTiro(enemy_vel_tiro);
 				rgb[0] = 1.0;
 				rgb[1] = 0.0;
 				rgb[2] = 0.0;
@@ -511,7 +532,7 @@ int main(int argc, char ** argv) {
 				rgb[1] = 0.0;
 				rgb[2] = 0.0;
         cy = 2*world.getPosY() - cy;
-        islands.push_back(Island(id, rgb, cx, cy, 0.0, r));
+        islands.push_back(Island(id, rgb, cx, cy, 0.0, r, r*(tower_size/100)));
 				break;
 			default:
 				break;

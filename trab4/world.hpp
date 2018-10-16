@@ -11,13 +11,14 @@ class Island {
   GLfloat pos_z;
   GLfloat radius;
   GLfloat rgb[3];
+  GLfloat tower_perc;
 
 private:
   void DesenhaCircle(GLfloat x, GLfloat y, GLfloat rad, GLfloat R, GLfloat G, GLfloat B);
-  void DesenhaIsland(GLfloat x, GLfloat y, GLfloat pos_z, GLfloat radius, GLfloat R, GLfloat G, GLfloat B);//, GLfloat theta2, GLfloat theta3);
+  void DesenhaIsland(GLfloat x, GLfloat y, GLfloat pos_z, GLfloat radius, GLfloat tower_radius, GLfloat R, GLfloat G, GLfloat B);//, GLfloat theta2, GLfloat theta3);
 
 public:
-  Island(GLint ident, GLfloat colors[3], GLfloat x = 0.0, GLfloat y = 0.0, GLfloat z = 0.0, GLfloat rad = 1.0) {
+  Island(GLint ident, GLfloat colors[3], GLfloat x = 0.0, GLfloat y = 0.0, GLfloat z = 0.0, GLfloat rad = 1.0, GLfloat t_perc = 0.0) {
     id = ident;
     pos_x = x;
     pos_y = y;
@@ -26,10 +27,11 @@ public:
     rgb[0] = colors[0];
     rgb[1] = colors[1];
     rgb[2] = colors[2];
+    tower_perc = t_perc;
   }
 
   void Desenha() {
-    DesenhaIsland(pos_x, pos_y, pos_z, radius,  rgb[0], rgb[1], rgb[2]);
+    DesenhaIsland(pos_x, pos_y, pos_z, radius, tower_perc, rgb[0], rgb[1], rgb[2]);
   }
 
   void MoveX(GLfloat dx);
@@ -61,6 +63,11 @@ public:
   void setId(GLint ident);
 
   GLint getId();
+
+  void setTowerPerc(GLfloat s);
+
+  GLfloat getTowerPerc();
+
 };
 
 class Sea {
