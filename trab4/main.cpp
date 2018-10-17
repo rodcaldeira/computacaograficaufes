@@ -39,7 +39,7 @@ string path_to_svg;
 Submarine::submarine p;
 Sea world;
 Cursor mouse_info;
-list<Torpedo> torpedos;
+list<Torpedo> torpedos, e_torpedos;
 list<Torpedo>::iterator tps, del_tps;
 list<Island> islands;
 list<Island>::iterator isl;
@@ -82,6 +82,10 @@ bool pointInsideCircle(GLfloat px, GLfloat py, GLfloat cx, GLfloat cy, GLfloat c
   return false;
 }
 
+GLfloat calcDist2d(GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2) {
+  return sqrt( pow(x1 - x2, 2) + pow(y1 - y2, 2) );
+}
+
 void display(void)
 {
    /* Limpar todos os pixels  */
@@ -92,6 +96,7 @@ void display(void)
    world.Desenha();
    for (Island i : islands) i.Desenha();
    for (Torpedo t : torpedos) t.Desenha();
+   for (Torpedo et : e_torpedos) et.Desenha(); 
    p.Desenha();
    for (Submarine::submarine e : enemies) e.Desenha();
    if (mouseStates[GLUT_RIGHT_BUTTON]) {
@@ -148,11 +153,66 @@ void keyup(unsigned char key, int x, int y)
       collision[3] = false;
       keyStatus[(int)('a')] = 0;
       break;
+    case 'u':
+    case 'U':
+      keyStatus[(int)('u')] = 0;
+      break;
   }
   glutPostRedisplay();
 }
 
-bool canMove(GLfloat d) {
+bool canMove(GLfloat d, const Submarine::submarine& s) {
+
+  GLfloat r;
+  GLfloat move_delta;
+  GLfloat cx, cy, c_angle, s_angle;
+  if (abs(s.getTethaPaddle()) < 0.02) {
+    cx = s.getPosX() + d*cos(s.getTethaCenter());
+    cy = s.getPosY() + d*sin(s.getTethaCenter());
+  } else {
+    r = s.getRadius()/tan(-s.getTethaPaddle());
+    move_delta = -d/r;
+
+    c_angle = -M_PI_2 + s.getTethaCenter();
+    s_angle = M_PI_2 + s.getTethaCenter() + move_delta;
+
+    cx = s.getPosX() + r*(cos(c_angle));
+    cy = s.getPosY() + r*(sin(c_angle));
+
+    cx += r*cos(s_angle);
+    cy += r*sin(s_angle);
+  }
+  bool coll = false;
+  // verify collision with island
+  for (Island i : islands) {
+    if (collisionDetection(i.getPosX(),
+                           i.getPosY(),
+                           i.getRadius(),
+                           cx,
+                           cy,
+                           s.getMaxRadius())) {
+                             std::cout << "collision with island" << std::endl;
+       coll = true;
+     }
+  }
+
+  // verify collision with enemies
+  
+    GLint id = s.getId();
+    for (Submarine::submarine e : enemies) {
+      if ((id != e.getId()) && (s.getSubmerginStatus() == e.getSubmerginStatus()) && collisionDetection(e.getPosX(),
+                             e.getPosY(),
+                             e.getRadius(),
+                             cx,
+                             cy,
+                             s.getMaxRadius())) {
+                               std::cout << "collision with submarine" << std::endl;
+         coll = true;
+       }
+    }
+  
+
+/* bool canMove(GLfloat d) {
 
   GLfloat r;
   GLfloat move_delta;
@@ -198,10 +258,10 @@ bool canMove(GLfloat d) {
          coll = true;
        }
     }
-  }
+  } */
 
   // verify if leaves the world
-  if (sqrt(pow((cx-world.getPosX()),2) + pow((cy-world.getPosY()),2)) >= world.getRadius() - p.getMaxRadius()) {
+  if (sqrt(pow((cx-world.getPosX()),2) + pow((cy-world.getPosY()),2)) >= world.getRadius() - s.getMaxRadius()) {
     coll = true;
   }
   return coll;
@@ -244,20 +304,21 @@ void mouse(int button, int state, int x, int y) {
   y = glutGet(GLUT_WINDOW_HEIGHT) - y;
   x += dx;
   y += dy;
-  if (button == GLUT_LEFT_BUTTON && p.getSubmerginStatus() == -1) { // para frente
-    if (state == GLUT_DOWN) {
-      torpedos.push_back(Torpedo(p.getPosX(), p.getPosY(), p.getTethaCenter(), p.getRadius()/12, p.getSubmerginStatus(), x, y));
+  if (p.getSubmerginStatus() == -1) {
+    if (button == GLUT_LEFT_BUTTON) { // para frente
+      if (state == GLUT_DOWN) {
+        torpedos.push_back(Torpedo(p.getPosX(), p.getPosY(), p.getTethaCenter(), p.getRadius()/12, p.getSubmerginStatus(), x, y));
+      }
     }
-  }
-  else if (button == GLUT_RIGHT_BUTTON && p.getSubmerginStatus() == 1) { // para cima
-    if (state == GLUT_DOWN) {
-      mouse_info.setPosX(x);
-      mouse_info.setPosY(y);
-      mouseStates[button] = true;
-
-    } else {
-      mouseStates[button] = false;
-      torpedos.push_back(Torpedo(p.getPosX(), p.getPosY(), p.getTethaCenter(), p.getRadius()/12, p.getSubmerginStatus(), x, y));
+    if (button == GLUT_RIGHT_BUTTON) { // para cima
+      if (state == GLUT_DOWN) {
+        mouse_info.setPosX(x);
+        mouse_info.setPosY(y);
+        mouseStates[button] = true;
+      } else {
+        mouseStates[button] = false;
+        torpedos.push_back(Torpedo(p.getPosX(), p.getPosY(), p.getTethaCenter(), p.getRadius()/12, 1, x, y));
+      }
     }
   }
 }
@@ -286,9 +347,17 @@ void updateTorpedos(GLdouble timeDiff) {
       for (Island i : islands) {
         if (pointInsideCircle(px, py, i.getPosX(), i.getPosY(), i.getRadius())) tps->setToDelete(true);
       }
-      for (Submarine::submarine e : enemies) {
-        if (pointInsideCircle(px, py, e.getPosX(), e.getPosY(), e.getRadius())) tps->setToDelete(true);
+      for (enmy = enemies.begin(); enmy != enemies.end(); ++enmy) {
+        if (pointInsideCircle(px, py, enmy->getPosX(), enmy->getPosY(), enmy->getRadius())) {
+          tps->setToDelete(true);
+          enmy->setToDelete(true);
+        }
       }
+      /* for (Submarine::submarine e : enemies) {
+        if (pointInsideCircle(px, py, e.getPosX(), e.getPosY(), e.getRadius())) tps->setToDelete(true);
+      } */
+    } else { // superior
+
     }
   }
   del_tps = torpedos.begin();
@@ -303,6 +372,37 @@ void updateTorpedos(GLdouble timeDiff) {
       tps++;
     }
   }
+  
+  //std::cout << e_torpedos.size() << std::endl;
+  for (tps = e_torpedos.begin(); tps != e_torpedos.end(); ++tps) {
+    tps->Move(timeDiff, enemy_vel_tiro);  
+    if (sqrt(pow((tps->getPosX()-world.getPosX()),2) + pow((tps->getPosY()-world.getPosY()),2)) >= world.getRadius() - tps->getRadius()) {
+      tps->setToDelete(true);
+    }
+    if (tps->getType() == -1) { //retilinio
+      GLfloat px = tps->getPosX();
+      GLfloat py = tps->getPosY();
+      for (Island i : islands) {
+        if (pointInsideCircle(px, py, i.getPosX(), i.getPosY(), i.getRadius())) {
+          tps->setToDelete(true);
+        }
+      }
+      if (pointInsideCircle(px, py, p.getPosX(), p.getPosY(), p.getRadius())) {
+        tps->setToDelete(true);
+      }
+    }
+  }
+  del_tps = e_torpedos.begin();
+  tps = e_torpedos.begin();
+  while (tps != e_torpedos.end()) {
+    if (tps->getToDelete()) {
+      del_tps = tps;
+      tps++;
+      e_torpedos.erase(del_tps);
+    } else {
+      tps++;
+    }
+  }
 }
 
 void updatePlayer(GLdouble timeDiff) {
@@ -310,7 +410,7 @@ void updatePlayer(GLdouble timeDiff) {
   //Treat keyPress
   if(keyStatus[(int)('w')])
   {
-    collision[0] = canMove(dist);
+    collision[0] = canMove(dist, p);
     if (!collision[0]) p.Move(dist);
   }
   if(keyStatus[(int)('d')])
@@ -319,7 +419,7 @@ void updatePlayer(GLdouble timeDiff) {
   }
   if(keyStatus[(int)('s')])
   {
-    collision[2] = canMove(-dist);
+    collision[2] = canMove(-dist, p);
     if (!collision[2]) p.Move(-dist); //p.MoveY(-0.05);
   }
   if(keyStatus[(int)('a')])
@@ -364,6 +464,17 @@ void updatePlayer(GLdouble timeDiff) {
 }
 
 void updateEnemies(GLdouble timeDiff) {
+  del_enemy = enemies.begin();
+  enmy = enemies.begin();
+  while (enmy != enemies.end()) {
+    if (enmy->getToDelete()) {
+      del_enemy = enmy;
+      enmy++;
+      enemies.erase(del_enemy);
+    } else {
+      enmy++;
+    }
+  }
   for (enmy = enemies.begin(); enmy != enemies.end(); ++enmy) {
 
     if (enmy->getSubmerginStatus() == 1) {
@@ -373,7 +484,31 @@ void updateEnemies(GLdouble timeDiff) {
       enmy->submerge(glutGet(GLUT_ELAPSED_TIME) - animation_submerge_time);
     }
 
+    GLfloat paddle_inc = (float)(rand() % 100+1)/1000;
+    GLfloat factor;
+    if (rand()%2 == 0) {
+      factor = 1.0;
+    } else {
+      factor = -1.0;
+    }
+    //std::cout << factor << std::endl;
+    enmy->RotateTethaPaddle(factor * paddle_inc);
 
+    if (canMove(enmy->getVel()*timeDiff, *enmy) == false) {
+      //enmy->Move(enmy->getVel()*timeDiff);
+    } else {
+      enmy->setVel(-1*enmy->getVel());
+    }
+
+    if (rand() % 100000+1 < enemy_shot_freq*100) {
+    
+      GLfloat px = enmy->getPosX();
+      GLfloat py = enmy->getPosY();
+      GLfloat tetha = enmy->getTethaCenter();
+      GLfloat r = enmy->getRadius()/10;
+    
+      e_torpedos.push_back(Torpedo(px, py, tetha, r, -1, 0.0, 0.0));
+    }
 
     enmy->updateHeli();
   }
@@ -392,8 +527,8 @@ void idle(void)
 	previousTime = currentTime;
 
 	updatePlayer(timeDiference);
-  updateTorpedos(timeDiference);
   updateEnemies(timeDiference);
+  updateTorpedos(timeDiference);
 
   glutPostRedisplay();
 }

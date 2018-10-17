@@ -15,6 +15,10 @@ Torpedo::Torpedo(GLfloat x, GLfloat y, GLfloat tetha, GLfloat r, GLfloat t, GLfl
   max_radius = 2*r; //setMaxRadius(2*r);
   type = t; //setType(t);
   to_delete = false;
+  pos_z = 0.0;
+  R = 0.0;
+  G = 0.0;
+  B = 0.0;
   if (t == 1) {
     pos_x = x + (radius - radius/5)*cos(tetha); // setPosX(x);
     pos_y = y + (radius - radius/5)*sin(tetha); //setPosY(y);
@@ -184,13 +188,14 @@ void Torpedo::DesenhaTorpedo(GLfloat x, GLfloat y, GLfloat radius, GLfloat cR,
         glPushMatrix();
           glTranslatef(x, y, 0.0);
           glRotatef(tetha_center*180/M_PI, 0, 0, 1);
-          DesenhaRect(center, 6*radius, radius, 0.0, 0.0, 0.0);
+          DesenhaRect(center, 6*radius, radius, cR, cG, cB);
+          /* std::cout << "desenhou torpedo" << std::endl; */
         glPopMatrix();
       } else { // circle
         glPushMatrix();
           glTranslatef(x, y, 0.0);
           glRotatef(tetha_center, 0, 0, 1);
-          DesenhaCircle(0.0, 0.0, radius, radius, 0.0, 0.0, 0.0, 360);
+          DesenhaCircle(0.0, 0.0, radius, radius, cR, cG, cB, 360);
         glPopMatrix();
       }
 	}

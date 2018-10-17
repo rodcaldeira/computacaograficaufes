@@ -21,6 +21,7 @@ submarine::submarine() {
 	setTethaPaddle(0.0);
 	setMovingZAxis(false);
 	setCanMove(true);
+	setToDelete(false);
 	setSubmerginStatus(1);
 	setDirectionSubX(cos(getTethaCenter()));
 	setDirectionSubY(sin(getTethaCenter()));
@@ -84,11 +85,11 @@ void submarine::setDirectionSubY(GLfloat directionSubY) {
 	direction_sub_y = directionSubY;
 }
 
-GLfloat submarine::getId() {
+GLint submarine::getId() const {
 	return id;
 }
 
-void submarine::setId(GLfloat x) {
+void submarine::setId(GLint x) {
 	id = x;
 }
 
@@ -161,18 +162,20 @@ void submarine::setTethaPaddle(GLfloat tethaPaddle) {
 	tetha_paddle = tethaPaddle * M_PI / 180;
 }
 
+bool submarine::getToDelete() const {
+	return to_delete;
+}
+
+void submarine::setToDelete(bool status) {
+	to_delete = status;
+}
+
 submarine::~submarine() {
 	// TODO Auto-generated destructor stub
 }
 
-bool submarine::checkHit(GLfloat x, GLfloat y, GLfloat z) {
-	if (
-		sqrt(
-			pow(pos_x - x, 2) +
-			pow(pos_y - y, 2) +
-			pow(pos_z - z, 2)
-		)
-	) return true;
+bool submarine::checkHit(GLfloat x, GLfloat y, GLfloat z, GLfloat r) {
+	if (sqrt(pow(pos_x - x, 2) + pow(pos_y - y, 2) + pow(pos_z - z, 2)) < radius + r) return true;
 	return false;
 }
 

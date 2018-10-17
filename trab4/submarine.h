@@ -10,9 +10,11 @@
 #include <GL/gl.h>
 #include <GL/glu.h>
 
-namespace Submarine {
+namespace Submarine
+{
 
-enum REFERENCE {
+enum REFERENCE
+{
 	center = 1,
 	top_center,
 	right_center,
@@ -24,7 +26,8 @@ enum REFERENCE {
 	top_left_corner
 };
 
-class submarine {
+class submarine
+{
 	GLfloat R;
 	GLfloat G;
 	GLfloat B;
@@ -33,7 +36,7 @@ class submarine {
 	GLfloat pos_y;
 	GLfloat pos_z;
 	GLfloat radius;
-  GLfloat max_radius;
+	GLfloat max_radius;
 	GLfloat direction_sub_x;
 	GLfloat direction_sub_y;
 	GLfloat direction_steering_x;
@@ -42,18 +45,21 @@ class submarine {
 	GLfloat tetha_paddle;
 	GLfloat tetha_heli;
 
-  GLfloat velTiro;
-  GLfloat vel;
-  bool can_move;
-  bool moving_z_axis;
-  GLint submergin_status;
-  GLfloat id;
-private:
+	GLfloat velTiro;
+	GLfloat vel;
+	bool can_move;
+	bool moving_z_axis;
+	GLint submergin_status;
+	GLint id;
+	bool to_delete;
+
+  private:
 	void DesenhaSubmarine(GLfloat x, GLfloat y, GLfloat radius, GLfloat cR, GLfloat cG, GLfloat cB);
 	void DesenhaCircle(GLfloat x, GLfloat y, GLfloat radx, GLfloat rady, GLfloat cR, GLfloat cG, GLfloat cB, GLfloat ang = 360);
 	void DesenhaRect(REFERENCE ref, GLfloat base, GLfloat altura, GLfloat cR, GLfloat cG, GLfloat cB);
 	void DesenhaTriangle(GLfloat x, GLfloat y, GLfloat l, GLfloat cR, GLfloat cG, GLfloat cB);
-public:
+
+  public:
 	submarine();
 	virtual ~submarine();
 	GLfloat getB() const;
@@ -70,18 +76,18 @@ public:
 	void setDirectionSubX(GLfloat directionSubX);
 	GLfloat getDirectionSubY() const;
 	void setDirectionSubY(GLfloat directionSubY);
-  GLint getSubmerginStatus() const;
-  void setSubmerginStatus(GLint i);
-  GLfloat getVelTiro() const;
-  void setVelTiro(GLfloat vel_tiro);
-  GLfloat getVel() const;
-  void setVel(GLfloat v);
-  bool getCanMove() const;
-  void setCanMove(bool s);
-  bool getMovingZAxis() const;
-  void setMovingZAxis(bool s);
-  GLfloat getId();
-  void setId(GLfloat x);
+	GLint getSubmerginStatus() const;
+	void setSubmerginStatus(GLint i);
+	GLfloat getVelTiro() const;
+	void setVelTiro(GLfloat vel_tiro);
+	GLfloat getVel() const;
+	void setVel(GLfloat v);
+	bool getCanMove() const;
+	void setCanMove(bool s);
+	bool getMovingZAxis() const;
+	void setMovingZAxis(bool s);
+	GLint getId() const;
+	void setId(GLint x);
 	GLfloat getPosX() const;
 	void setPosX(GLfloat posX);
 	GLfloat getPosY() const;
@@ -90,16 +96,18 @@ public:
 	void setPosZ(GLfloat posZ);
 	GLfloat getRadius() const;
 	void setRadius(GLfloat radius);
-  GLfloat getMaxRadius() const;
-  void setMaxRadius(GLfloat r);
+	GLfloat getMaxRadius() const;
+	void setMaxRadius(GLfloat r);
 	GLfloat getTethaCenter() const;
 	void setTethaCenter(GLfloat tethaCenter);
 	GLfloat getTethaHeli() const;
 	void setTethaHeli(GLfloat tethaHeli);
 	GLfloat getTethaPaddle() const;
 	void setTethaPaddle(GLfloat tethaPaddle);
+	bool getToDelete() const;
+	void setToDelete(bool status);
 
-	bool checkHit(GLfloat x, GLfloat y, GLfloat z);
+	bool checkHit(GLfloat x, GLfloat y, GLfloat z, GLfloat r);
 	void Move(GLdouble d);
 	void MoveX(GLfloat dx);
 	void MoveY(GLfloat dy);
@@ -107,10 +115,11 @@ public:
 	void RotateTethaHeli(GLfloat ang);
 	void RotateTethaPaddle(GLfloat ang);
 
-  void updateHeli();
-  void submerge(int milisec);
+	void updateHeli();
+	void submerge(int milisec);
 
-	void Desenha() {
+	void Desenha()
+	{
 		DesenhaSubmarine(pos_x, pos_y, radius, R, G, B);
 	}
 };

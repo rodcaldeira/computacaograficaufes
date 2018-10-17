@@ -29,6 +29,7 @@ class Torpedo {
 
 	GLfloat pos_x;
 	GLfloat pos_y;
+  GLfloat pos_z;
   GLfloat tetha_center;
   GLfloat radius;
   GLfloat max_radius;
