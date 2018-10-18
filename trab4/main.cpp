@@ -211,56 +211,7 @@ bool canMove(GLfloat d, const Submarine::submarine& s) {
        }
     }
   
-
-/* bool canMove(GLfloat d) {
-
-  GLfloat r;
-  GLfloat move_delta;
-  GLfloat cx, cy, c_angle, s_angle;
-  if (abs(p.getTethaPaddle()) < 0.02) {
-    cx = p.getPosX() + d*cos(p.getTethaCenter());
-    cy = p.getPosY() + d*sin(p.getTethaCenter());
-  } else {
-    r = p.getRadius()/tan(-p.getTethaPaddle());
-    move_delta = -d/r;
-
-    c_angle = -M_PI_2 + p.getTethaCenter();
-    s_angle = M_PI_2 + p.getTethaCenter() + move_delta;
-
-    cx = p.getPosX() + r*(cos(c_angle));
-    cy = p.getPosY() + r*(sin(c_angle));
-
-    cx += r*cos(s_angle);
-    cy += r*sin(s_angle);
-  }
-  bool coll = false;
-  // verify collision with island
-  for (Island i : islands) {
-    if (collisionDetection(i.getPosX(),
-                           i.getPosY(),
-                           i.getRadius(),
-                           cx,
-                           cy,
-                           p.getMaxRadius())) {
-       coll = true;
-     }
-  }
-
-  // verify collision with enemies
-  if (p.getSubmerginStatus() == 1) {
-    for (Submarine::submarine e : enemies) {
-      if (collisionDetection(e.getPosX(),
-                             e.getPosY(),
-                             e.getRadius(),
-                             cx,
-                             cy,
-                             p.getMaxRadius())) {
-         coll = true;
-       }
-    }
-  } */
-
-  // verify if leaves the world
+  // verify if try to leave the world
   if (sqrt(pow((cx-world.getPosX()),2) + pow((cy-world.getPosY()),2)) >= world.getRadius() - s.getMaxRadius()) {
     coll = true;
   }
