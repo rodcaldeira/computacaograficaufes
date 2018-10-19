@@ -12,6 +12,7 @@ class Island {
   GLfloat radius;
   GLfloat rgb[3];
   GLfloat tower_perc;
+  bool alive;
 
 private:
   void DesenhaCircle(GLfloat x, GLfloat y, GLfloat rad, GLfloat R, GLfloat G, GLfloat B);
@@ -28,6 +29,7 @@ public:
     rgb[1] = colors[1];
     rgb[2] = colors[2];
     tower_perc = t_perc;
+    alive = true;
   }
 
   void Desenha() {
@@ -67,6 +69,10 @@ public:
   void setTowerPerc(GLfloat s);
 
   GLfloat getTowerPerc();
+
+  void setAlive(bool status);
+
+  bool getAlive();
 
 };
 

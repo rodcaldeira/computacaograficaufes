@@ -172,7 +172,7 @@ void Torpedo::Move(GLdouble d, GLfloat vel_torpedo) {
     } else { // descendo o Torpedo
       if (radius > max_radius/2) {
         radius = max_radius/2 + max_radius*(actual_dist/dist_target);
-        if (abs(pos_x - target_x) < 0.1 && (abs(pos_y - target_x))) to_delete = true;
+        if (abs(pos_x - target_x) <= 1 && (abs(pos_y - target_y) <= 1)) to_delete = true;
       }
     }
   } else if (type == -1) { // underwater movimento retilinio uniforme

@@ -51,10 +51,12 @@ GLfloat tower_size;
 GLfloat enemy_shot_freq;
 GLfloat enemy_vel;
 GLfloat enemy_vel_tiro;
+int tower_number;
 int animation_submerge_time;
 //Key status
 int keyStatus[256];
 bool* mouseStates = new bool[3];
+bool is_playing = true;
 
 
 bool collisionTest = false;
@@ -67,6 +69,9 @@ ref para funcao str2int
 https://stackoverflow.com/questions/16388510/evaluate-a-string-with-a-switch-in-c#answer-16388610
 utilizada para usar o switch case com string
 */
+
+void PrintScore(GLfloat x, GLfloat y);
+
 constexpr unsigned int str2int(const char* str, int h = 0)
 {
     return !str[h] ? 5381 : (str2int(str, h+1) * 33) ^ str[h];
@@ -102,6 +107,7 @@ void display(void)
    if (mouseStates[GLUT_RIGHT_BUTTON]) {
      mouse_info.Desenha();
    }
+   PrintScore(180.0, 15.0);
    /* Não esperar! */
    glutSwapBuffers ();
 }
@@ -126,6 +132,34 @@ void init (void)
           100.0);
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
+}
+
+// Text variable
+static char str[2000];
+void * font = GLUT_BITMAP_9_BY_15;
+
+void PrintScore(GLfloat x, GLfloat y)
+{
+    //Create a string to be printed
+    char *tmpStr;
+    if (tower_number == 0) {
+      sprintf(str, "Voce ganhou");
+    } else if (!is_playing) {
+      sprintf(str, "Voce perdeu");
+    } else {
+      sprintf(str, "Towers: %d, Score: %d", tower_number, (int)islands.size()-tower_number );
+    }
+    //Define the position to start printing
+    glRasterPos2f(world.getPosX() + world.getRadius() - x, world.getPosY() + world.getRadius() - y);
+    //Print  the first Char with a certain font
+    //glutBitmapLength(font,(unsigned char*)str);
+    tmpStr = str;
+    //Print each of the other Char at time
+    while( *tmpStr ){
+        glutBitmapCharacter(font, *tmpStr);
+        tmpStr++;
+    }
+
 }
 
 void keyup(unsigned char key, int x, int y)
@@ -308,7 +342,21 @@ void updateTorpedos(GLdouble timeDiff) {
         if (pointInsideCircle(px, py, e.getPosX(), e.getPosY(), e.getRadius())) tps->setToDelete(true);
       } */
     } else { // superior
-
+      GLfloat px = tps->getPosX();
+      GLfloat py = tps->getPosY();
+      GLfloat tx = tps->getTargetX();
+      GLfloat ty = tps->getTargetY();
+      GLfloat r_mouse = mouse_info.getRadius(); // se o target está proximo do local + error
+      if (abs(tx - px) <= 1 && abs(ty - py) <= 1) {
+        for (isl = islands.begin(); isl != islands.end(); ++isl) {
+        // verificar se
+        // o local do torpedo está proximo ao centro da ilha (com raio de porcentagem)
+          if ((isl->getAlive() == true) && collisionDetection(px, py, r_mouse, isl->getPosX(), isl->getPosY(), isl->getRadius()*(isl->getTowerPerc()/100))) {
+            isl->setAlive(false);
+            tower_number--;
+          }
+        } 
+      }
     }
   }
   del_tps = torpedos.begin();
@@ -338,7 +386,8 @@ void updateTorpedos(GLdouble timeDiff) {
           tps->setToDelete(true);
         }
       }
-      if (pointInsideCircle(px, py, p.getPosX(), p.getPosY(), p.getRadius())) {
+      if ((p.getSubmerginStatus() == -1) && pointInsideCircle(px, py, p.getPosX(), p.getPosY(), p.getRadius())) {
+        is_playing = false;
         tps->setToDelete(true);
       }
     }
@@ -477,10 +526,12 @@ void idle(void)
 	timeDiference = currentTime - previousTime; // elapsed time from the previous frame
 	previousTime = currentTime;
 
-	updatePlayer(timeDiference);
-  updateEnemies(timeDiference);
-  updateTorpedos(timeDiference);
-
+  if (is_playing && (tower_number > 0)) {
+    updatePlayer(timeDiference);
+    updateEnemies(timeDiference);
+    updateTorpedos(timeDiference);
+  }
+	
   glutPostRedisplay();
 }
 
@@ -550,6 +601,8 @@ int main(int argc, char ** argv) {
 	const char * color;
 	GLfloat rgb[3];
 
+  tower_number = 0;
+
 	while (tmp_xml != nullptr) {
 	  color = tmp_xml->Attribute("fill");
     double cx, cy, r;
@@ -614,6 +667,7 @@ int main(int argc, char ** argv) {
 				break;
 			case str2int("black"):
 				// preto em rgb: 0, 0, 0
+        tower_number++;
 				rgb[0] = 0.0;
 				rgb[1] = 0.0;
 				rgb[2] = 0.0;

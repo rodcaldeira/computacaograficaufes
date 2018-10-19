@@ -16,7 +16,9 @@ void Island::DesenhaIsland(GLfloat x, GLfloat y, GLfloat pos_z, GLfloat radius, 
   glPushMatrix();
     glTranslatef(x, y, 0.0);
     DesenhaCircle(x, y, radius, R, G, B);
-    DesenhaCircle(x, y, tower_radius, 1.0, 1.0, 0.0);
+    if (alive) {
+      DesenhaCircle(x, y, tower_radius, 1.0, 1.0, 0.0);
+    }
   glPopMatrix();
 }
 
@@ -76,6 +78,13 @@ GLfloat Island::getTowerPerc() {
   return tower_perc;
 }
   
+void Island::setAlive(bool status) {
+  alive = status;
+}
+
+bool Island::getAlive() {
+  return alive;
+}
 
 void Sea::DesenhaCircle(GLfloat x, GLfloat y, GLfloat rad, GLfloat R, GLfloat G, GLfloat B) {
   glColor3f(R, G, B);
