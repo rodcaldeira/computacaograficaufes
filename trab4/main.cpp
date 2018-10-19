@@ -25,7 +25,7 @@
 #include <GL/glu.h>
 #include <stdlib.h>
 #include <GL/glut.h>
-#include <math.h>
+#include <cmath>
 #include "tinyxml2/tinyxml2.h"
 #include "submarine.h"
 #include "torpedo.h"
@@ -225,25 +225,37 @@ bool canMove(GLfloat d, const Submarine::submarine& s) {
                            cx,
                            cy,
                            s.getMaxRadius())) {
-                             std::cout << "collision with island" << std::endl;
+                             /* std::cout << "collision with island" << std::endl; */
        coll = true;
      }
   }
 
   // verify collision with enemies
   
-    GLint id = s.getId();
-    for (Submarine::submarine e : enemies) {
-      if ((id != e.getId()) && (s.getSubmerginStatus() == e.getSubmerginStatus()) && collisionDetection(e.getPosX(),
-                             e.getPosY(),
-                             e.getRadius(),
-                             cx,
-                             cy,
-                             s.getMaxRadius())) {
-                               std::cout << "collision with submarine" << std::endl;
-         coll = true;
-       }
-    }
+  GLint id = s.getId();
+  for (Submarine::submarine e : enemies) {
+    if ((id != e.getId()) && (s.getSubmerginStatus() == e.getSubmerginStatus()) && collisionDetection(e.getPosX(),
+                            e.getPosY(),
+                            e.getRadius(),
+                            cx,
+                            cy,
+                            s.getMaxRadius())) {
+                              /* std::cout << "collision with submarine" << std::endl; */
+        coll = true;
+      }
+  }
+
+  if (id != p.getId()) {
+    if ((s.getSubmerginStatus() == p.getSubmerginStatus()) && collisionDetection(p.getPosX(),
+                            p.getPosY(),
+                            p.getRadius(),
+                            cx,
+                            cy,
+                            s.getMaxRadius())) {
+                              /* std::cout << "collision with submarine" << std::endl; */
+        coll = true;
+      }
+  }
   
   // verify if try to leave the world
   if (sqrt(pow((cx-world.getPosX()),2) + pow((cy-world.getPosY()),2)) >= world.getRadius() - s.getMaxRadius()) {
@@ -495,7 +507,7 @@ void updateEnemies(GLdouble timeDiff) {
     enmy->RotateTethaPaddle(factor * paddle_inc);
 
     if (canMove(enmy->getVel()*timeDiff, *enmy) == false) {
-      //enmy->Move(enmy->getVel()*timeDiff);
+      enmy->Move(enmy->getVel()*timeDiff);
     } else {
       enmy->setVel(-1*enmy->getVel());
     }
