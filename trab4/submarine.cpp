@@ -182,8 +182,8 @@ bool submarine::checkHit(GLfloat x, GLfloat y, GLfloat z, GLfloat r) {
 void submarine::Move(GLdouble d) {
   // if (d > 0) tetha_heli += 0.2;
   // else tetha_heli -= 0.2;
-	tetha_heli += 0.1;
-	if (abs(tetha_paddle) < 0.02) {
+	tetha_heli += 0.1*fabs(d);
+	if (fabs(tetha_paddle) < 0.02) {
 		//straight
 
 		MoveX(d*cos(tetha_center));
@@ -207,6 +207,18 @@ void submarine::Move(GLdouble d) {
 	}
 }
 
+void submarine::incTicks() {
+	ticks++;
+}
+
+GLint submarine::getTicks() {
+	return ticks;
+}
+
+void submarine::setTicks(GLint t) {
+	ticks = t;
+}
+
 void submarine::MoveX(GLfloat dx) {
 	pos_x += dx;
 }
@@ -215,8 +227,8 @@ void submarine::MoveY(GLfloat dy) {
 	pos_y += dy;
 }
 
-void submarine::updateHeli() {
-  tetha_heli += 0.02;
+void submarine::updateHeli(GLdouble timeDiff) {
+  tetha_heli += 0.02*timeDiff;
 }
 
 void submarine::RotateTethaCenter(GLfloat ang) {
@@ -373,7 +385,7 @@ void submarine::DesenhaTriangle(GLfloat x, GLfloat y, GLfloat l, GLfloat cR,
 }
 
 void submarine::RotateTethaPaddle(GLfloat ang) {
-	if (abs(tetha_paddle + ang * M_PI / 180) <= M_PI_4) {
+	if (fabs(tetha_paddle + ang * M_PI / 180) <= M_PI_4) {
 		tetha_paddle += ang * M_PI / 180;
 		setDirectionSubX(cos(tetha_paddle));
 		setDirectionSubY(sin(tetha_paddle));

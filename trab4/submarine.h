@@ -52,6 +52,7 @@ class submarine
 	GLint submergin_status;
 	GLint id;
 	bool to_delete;
+    GLint ticks = 0;
 
   private:
 	void DesenhaSubmarine(GLfloat x, GLfloat y, GLfloat radius, GLfloat cR, GLfloat cG, GLfloat cB);
@@ -115,8 +116,11 @@ class submarine
 	void RotateTethaHeli(GLfloat ang);
 	void RotateTethaPaddle(GLfloat ang);
 
-	void updateHeli();
+	void updateHeli(GLdouble timeDiff);
 	void submerge(int milisec);
+	void incTicks();
+	GLint getTicks();
+	void setTicks(GLint t);
 
 	void Desenha()
 	{

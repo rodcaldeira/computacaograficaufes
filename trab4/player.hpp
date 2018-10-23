@@ -26,6 +26,7 @@ class Player {
   GLfloat tethaHeli;
   GLfloat velTiro;
   GLfloat vel;
+  GLint ticks;
   bool can_move;
   bool moving_z_axis;
 
@@ -56,6 +57,7 @@ public:
     submergin_status = 1;
     moving_z_axis = false;
     can_move = true;
+    ticks = 0;
   }
 
   void Desenha() {

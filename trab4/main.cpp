@@ -200,7 +200,7 @@ bool canMove(GLfloat d, const Submarine::submarine& s) {
   GLfloat r;
   GLfloat move_delta;
   GLfloat cx, cy, c_angle, s_angle;
-  if (abs(s.getTethaPaddle()) < 0.02) {
+  if (fabs(s.getTethaPaddle()) < 0.02) {
     cx = s.getPosX() + d*cos(s.getTethaCenter());
     cy = s.getPosY() + d*sin(s.getTethaCenter());
   } else {
@@ -359,7 +359,7 @@ void updateTorpedos(GLdouble timeDiff) {
       GLfloat tx = tps->getTargetX();
       GLfloat ty = tps->getTargetY();
       GLfloat r_mouse = mouse_info.getRadius(); // se o target está proximo do local + error
-      if (abs(tx - px) <= 1 && abs(ty - py) <= 1) {
+      if (fabs(tx - px) <= 1 && fabs(ty - py) <= 1) {
         for (isl = islands.begin(); isl != islands.end(); ++isl) {
         // verificar se
         // o local do torpedo está proximo ao centro da ilha (com raio de porcentagem)
@@ -427,7 +427,7 @@ void updatePlayer(GLdouble timeDiff) {
   }
   if(keyStatus[(int)('d')])
   {
-    p.RotateTethaPaddle(+0.05);
+    p.RotateTethaPaddle(+0.05*timeDiff);
   }
   if(keyStatus[(int)('s')])
   {
@@ -436,7 +436,7 @@ void updatePlayer(GLdouble timeDiff) {
   }
   if(keyStatus[(int)('a')])
   {
-    p.RotateTethaPaddle(-0.05);
+    p.RotateTethaPaddle(-0.05*timeDiff);
   }
   if(keyStatus[(int)('u')])
   {
@@ -472,7 +472,7 @@ void updatePlayer(GLdouble timeDiff) {
     p.submerge(glutGet(GLUT_ELAPSED_TIME) - animation_submerge_time);
   }
 
-  p.updateHeli();
+  p.updateHeli(timeDiff);
 }
 
 void updateEnemies(GLdouble timeDiff) {
@@ -496,7 +496,31 @@ void updateEnemies(GLdouble timeDiff) {
       enmy->submerge(glutGet(GLUT_ELAPSED_TIME) - animation_submerge_time);
     }
 
-    GLfloat paddle_inc = (float)(rand() % 100+1)/1000;
+    GLfloat paddle_inc;
+    GLfloat factor;
+    // move paddle random
+    if (rand() % 100+1 > 60) {
+      paddle_inc = (float)(rand() % 10000+1)/100;
+      if (rand()%2 == 0) {
+        factor = 1.0;
+      } else {
+        factor = -1.0;
+      }
+      enmy->RotateTethaPaddle(factor * paddle_inc);
+    }
+    if (rand() % 100+1 > 5) {
+      if (canMove(enmy->getVel()*timeDiff, *enmy) == false) {
+        if (enmy->getTicks() % 100 == 0) {
+          if (rand() % 1000+1 > 990) {
+            enmy->setVel(-1*enmy->getVel());  
+          }
+        }
+        enmy->Move(enmy->getVel()*timeDiff);
+      } else {
+        enmy->setVel(-1*enmy->getVel());
+      }
+    }
+    /* GLfloat paddle_inc = (float)(rand() % 100+1)/1000;
     GLfloat factor;
     if (rand()%2 == 0) {
       factor = 1.0;
@@ -504,25 +528,24 @@ void updateEnemies(GLdouble timeDiff) {
       factor = -1.0;
     }
     //std::cout << factor << std::endl;
-    enmy->RotateTethaPaddle(factor * paddle_inc);
+    enmy->RotateTethaPaddle(factor * paddle_inc); */
 
-    if (canMove(enmy->getVel()*timeDiff, *enmy) == false) {
-      enmy->Move(enmy->getVel()*timeDiff);
-    } else {
-      enmy->setVel(-1*enmy->getVel());
+    
+    enmy->setTicks(enmy->getTicks() + timeDiff);
+    if (enmy->getTicks() >= 1000) {
+      enmy->setTicks(0);
+      if (((float)(rand() % 100+1))/100 < enemy_shot_freq) {
+        
+        GLfloat px = enmy->getPosX();
+        GLfloat py = enmy->getPosY();
+        GLfloat tetha = enmy->getTethaCenter();
+        GLfloat r = enmy->getRadius()/10;
+      
+        e_torpedos.push_back(Torpedo(px, py, tetha, r, -1, 0.0, 0.0));
+      }
     }
 
-    if (rand() % 100000+1 < enemy_shot_freq*100) {
-    
-      GLfloat px = enmy->getPosX();
-      GLfloat py = enmy->getPosY();
-      GLfloat tetha = enmy->getTethaCenter();
-      GLfloat r = enmy->getRadius()/10;
-    
-      e_torpedos.push_back(Torpedo(px, py, tetha, r, -1, 0.0, 0.0));
-    }
-
-    enmy->updateHeli();
+    enmy->updateHeli(timeDiff);
   }
 }
 
