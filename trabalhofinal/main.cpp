@@ -51,6 +51,7 @@ GLfloat tower_size;
 GLfloat enemy_shot_freq;
 GLfloat enemy_vel;
 GLfloat enemy_vel_tiro;
+GLfloat biggest_island_radius = 0.1;
 int alturaDaJanela=500;
 int larguraDaJanela=500;
 int tower_number;
@@ -187,7 +188,12 @@ void drawMiniMap() {
       drawCirc(world.getPosX(), world.getPosY(), world.getRadius()/8, 0.0, 0.0, 1.0);  
       double f = (world.getPosX() + world.getRadius()/8)/(world.getPosX() + world.getRadius());
       // draw island
-      for (Island i : islands) drawCirc(i.getPosX()*f, i.getPosY()*f, i.getRadius()/8, 0.0, 0.0, 0.0);
+      for (Island i : islands) {
+        drawCirc(i.getPosX()*f, i.getPosY()*f, i.getRadius()/8, 0.0, 0.0, 0.0);
+        if (i.getAlive()) {
+          drawCirc(i.getPosX()*f, i.getPosY()*f, i.getTowerPerc()/8, 1.0, 1.0, 0.0);
+        }
+      }
       
       for (Submarine::submarine e : enemies) drawCirc(e.getPosX()*f, e.getPosY()*f, e.getMaxRadius()/8, 1.0, 0.0, 0.0);
       drawCirc(p.getPosX()*f, p.getPosY()*f, p.getMaxRadius()/8, 0.0, 1.0, 0.0);
@@ -306,9 +312,9 @@ void display(void)
   }
   
   PrintText(-world.getRadius()+15, world.getRadius()-25, str, 0.7, 0.7, 0.7);
+
   pickCam();
-  //gluLookAt(0.0, 0.0, 150.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
-  //gluLookAt(world.getPosX(), world.getPosY(), 7*p.getMaxRadius(), p.getPosX(), p.getPosY(), p.getPosZ(), 0.0, 1.0, 0.0);
+
   glBindTexture(GL_TEXTURE_2D, textureSky);
   world.Desenha(textureSky);
   p.Desenha();
@@ -316,72 +322,13 @@ void display(void)
   glLightfv(GL_LIGHT0, GL_POSITION, light_position);
   /* Desenhar um polígono branco (retângulo) */
 
-  
-      
-    //drawSky();
   for (Island i : islands) i.Desenha();
-  for (Torpedo t : torpedos) t.Desenha();
-  for (Torpedo et : e_torpedos) et.Desenha(); 
+  for (Torpedo t : torpedos) t.DesenhaTorpedo3d(t.getPosX(), t.getPosY(), t.getPosZ(), t.getRadius(), 0.5, 0.5, 0.5);
+  for (Torpedo et : e_torpedos) et.DesenhaTorpedo3d(et.getPosX(), et.getPosY(), et.getPosZ(), et.getRadius(), 0.5, 0.5, 0.5); 
   p.Desenha();
   for (Submarine::submarine e : enemies) e.Desenha();
-  //  if (mouseStates[GLUT_RIGHT_BUTTON]) {
-  //    mouse_info.Desenha();r
-  //  }
-
-  //p.setPosX(p.getPosX()+(GLfloat)0.01);
-  //
-  // glViewport(width/2, 0, width/2, height/2);
-  // glLoadIdentity();
-  // gluLookAt(0.0, 0.0, 3.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
-  // glutWireTeapot(1);
-  // p.setPosX(0.0);  
-  // p.setPosY(0.0);
 // minimap
   drawMiniMap();
-  
-  //
-  // glViewport(width/2, height/2, width/2, height/2);
-  // glLoadIdentity();
-  // gluLookAt(0.0, -3.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0);
-  // glutWireTeapot(1);
-
-  // glViewport(0, alturaDaJanela, larguraDaJanela, alturaDaJanela);
-  // glColor3f(1.0f, 0.0f, 0.0f);
-
-  // glMatrixMode(GL_PROJECTION);
-  // glLoadIdentity();
-  // glOrtho(-3.0, 3.0, -3.0, 3.0, 1.0, 50.0);
-  // gluLookAt(0.0, 5.0, 0.0,
-  //         0.0, 0.0, 0.0,
-  //         0.0, 0.0, -1.0);
-
-  // glMatrixMode(GL_MODELVIEW);
-  // glLoadIdentity();
-  // glutSolidCube(1);
-  // //glMatrixMode(GL_PROJECTION);
-
-
-  //  glMatrixMode(GL_MODELVIEW);
-  //  glLoadIdentity();
-  // //  gluLookAt(world.getPosX(), world.getPosY(), world.getPosZ()+world.getRadius()*2, 
-  // //            world.getPosX(), world.getPosY(), world.getPosZ(),
-  // //            0, 1, 0);
-  // drawMiniMap();
-
-  //  GLfloat light_position[] = {world.getPosX(), world.getPosY(), world.getRadius()*2, 1.0};
-  //  glLightfv(GL_LIGHT0, GL_POSITION, light_position);
-  //  /* Desenhar um polígono branco (retângulo) */
-
-  //  //world.Desenha();
-  // //  for (Island i : islands) i.Desenha();
-  // //  for (Torpedo t : torpedos) t.Desenha();
-  // //  for (Torpedo et : e_torpedos) et.Desenha(); 
-  // //  p.Desenha();
-  // //  for (Submarine::submarine e : enemies) e.Desenha();
-  // //  if (mouseStates[GLUT_RIGHT_BUTTON]) {
-  // //    mouse_info.Desenha();
-  // //  }
-  // //  PrintScore(180.0, 15.0);
 
    
    /* Não esperar! */
@@ -521,7 +468,7 @@ void mouse(int button, int state, int x, int y) {
 
   if (button == GLUT_LEFT_BUTTON) { // para frente
     if (state == GLUT_DOWN) {
-      torpedos.push_back(Torpedo(p.getPosX(), p.getPosY(), p.getTethaCenter(), p.getRadius()/12, p.getSubmerginStatus(), x, y));
+      torpedos.push_back(Torpedo(p.getPosX(), p.getPosY(), p.getPosZ(), p.getTethaCenter()+p.getTethaCanon(), p.getTethaCanonZ(), p.getRadius()/12, p.getSubmerginStatus(), x, y));
     }
   }
   if (button == GLUT_RIGHT_BUTTON) { // para cima
@@ -537,7 +484,7 @@ void mouse(int button, int state, int x, int y) {
       right_button = 0;
       camera_angle = 0;
       camera_angle_z = 0;
-      torpedos.push_back(Torpedo(p.getPosX(), p.getPosY(), p.getTethaCenter(), p.getRadius()/12, 1, x, y));
+      torpedos.push_back(Torpedo(p.getPosX(), p.getPosY(), p.getPosZ(), p.getTethaCenter(), 0.0, p.getRadius()/12, 1, x, y));
     }
   }
 
@@ -658,10 +605,11 @@ void updateEnemies(GLdouble timeDiff) {
         
         GLfloat px = enmy->getPosX();
         GLfloat py = enmy->getPosY();
+        GLfloat pz = enmy->getPosZ();
         GLfloat tetha = enmy->getTethaCenter();
         GLfloat r = enmy->getRadius()/10;
       
-        e_torpedos.push_back(Torpedo(px, py, tetha, r, -1, 0.0, 0.0));
+        e_torpedos.push_back(Torpedo(px, py, pz, tetha, 0.0, r, -1, 0.0, 0.0));
       }
     }
     enmy->updateHeli(timeDiff);
@@ -840,6 +788,7 @@ int main(int argc, char ** argv) {
         rgb[1] = 0.0;
         rgb[2] = 0.0;
         //cy = 2*world.getPosY() - cy;
+        if (r > biggest_island_radius) biggest_island_radius = r;
         cy = -(cy-world_pos_y);
         cx = (cx - world_pos_x);
         islands.push_back(Island(id, rgb, cx, cy, 0.0, r, r*(tower_size/100), p.getMaxRadius()*4));

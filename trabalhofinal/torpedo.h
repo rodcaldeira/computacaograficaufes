@@ -9,6 +9,7 @@
 #define TORPEDO_H_
 #include <GL/gl.h>
 #include <GL/glu.h>
+#include <GL/glut.h>
 
 enum REFERENCE {
 	center = 1,
@@ -31,6 +32,7 @@ class Torpedo {
 	GLfloat pos_y;
   GLfloat pos_z;
   GLfloat tetha_center;
+  GLfloat tetha_center_z;
   GLfloat radius;
   GLfloat max_radius;
   GLint type; // -1 submerso; 1 flor d'agua
@@ -44,7 +46,7 @@ private:
 	void DesenhaCircle(GLfloat x, GLfloat y, GLfloat radx, GLfloat rady, GLfloat cR, GLfloat cG, GLfloat cB, GLfloat ang = 360);
 	void DesenhaRect(REFERENCE ref, GLfloat base, GLfloat altura, GLfloat cR, GLfloat cG, GLfloat cB);
 public:
-	Torpedo(GLfloat x, GLfloat y, GLfloat tetha, GLfloat r, GLfloat t, GLfloat mx, GLfloat my);
+	Torpedo(GLfloat x, GLfloat y, GLfloat z, GLfloat tetha, GLfloat tetha_z, GLfloat r, GLfloat t, GLfloat mx, GLfloat my);
 	virtual ~Torpedo();
   GLfloat getR();
   void setR(GLfloat cR);
@@ -56,7 +58,11 @@ public:
   void setPosX(GLfloat x);
   GLfloat getPosY();
   void setPosY(GLfloat y);
+  GLfloat getPosZ();
+  void setPosZ(GLfloat z);
   GLfloat getTethaCenter();
+  void setTethaCenterZ(GLfloat a);
+  GLfloat getTethaCenterZ();
   void setTethaCenter(GLfloat a);
   GLfloat getRadius();
   void setRadius(GLfloat r);
@@ -73,12 +79,14 @@ public:
   GLfloat getDistTarget();
   void setDistTarget(GLfloat d);
 
+  void shot(GLdouble d, GLfloat vel_torpedo);
   void Move(GLdouble d, GLfloat vel_torpedo);
   void MoveX(GLfloat dx);
   void MoveY(GLfloat dy);
+  void MoveZ(GLfloat dz);
 
 
-
+  void DesenhaTorpedo3d(GLfloat x, GLfloat y, GLfloat z, GLfloat radius, GLfloat cR, GLfloat cG, GLfloat cB);
 
 	void Desenha() {
 		DesenhaTorpedo(pos_x, pos_y, radius, R, G, B);
