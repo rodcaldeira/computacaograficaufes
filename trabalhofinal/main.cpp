@@ -70,7 +70,45 @@ https://stackoverflow.com/questions/16388510/evaluate-a-string-with-a-switch-in-
 utilizada para usar o switch case com string
 */
 
-void PrintScore(GLfloat x, GLfloat y);
+void rasterChars(float x, float y, float z, const char *text, double r, double g, double b) {
+  //Push to recover original attributes
+  glPushAttrib(GL_ENABLE_BIT);
+  glDisable(GL_LIGHTING);
+  glDisable(GL_TEXTURE_2D);
+  //Draw text in the x, y, z position
+  glColor3f(r, g, b);
+  glRasterPos3f(x, y, z);
+  const char *tmpStr;
+  tmpStr = text;
+  while (*tmpStr) {
+    glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *tmpStr);
+    tmpStr++;
+  }
+  glPopAttrib();
+}
+
+void PrintText(float x, float y, const char *text, double r, double g, double b) {
+  glMatrixMode(GL_PROJECTION);
+  //Draw text considering a 2D space (disable all 3d features)
+  //Push to recover original PROJECTION MATRIX
+  glPushMatrix();
+    glLoadIdentity();
+    
+    glOrtho(-world.getRadius(), world.getRadius(), -world.getRadius(), world.getRadius(), 1000.0, -1000.0);
+    rasterChars(x, y, 0, text, r, g, b);
+  glPopMatrix();
+  glMatrixMode(GL_MODELVIEW);
+}
+
+void youWin() {
+  PrintText(0.1, 0.2, "YOU WIN!", 0, 0.5, 0);
+  is_playing = false;
+}
+
+void youLost() {
+  PrintText(0.1, 0.2, "YOU LOST!", 1, 0, 0);
+  is_playing = false;
+}
 
 constexpr unsigned int str2int(const char* str, int h = 0)
 {
@@ -184,6 +222,8 @@ void pickCam() {
   GLfloat tetha_canon_z_rad = gradToRad(p.getTethaCanonZ());
   switch(camera) {
     case 1: // first person
+
+      PrintText(0.1, 0.1, "Submarine command", 0, 1, 0);
       eyex = p.getPosX();
       eyey = p.getPosY();
       eyez = p.getPosZ() + p.getMaxRadius()*0.3;
@@ -197,6 +237,7 @@ void pickCam() {
       upvz = 1.0f;
       break;
     case 2: // canon PoV
+      PrintText(0.1, 0.1, "Canon PoV", 0, 1, 0);
       eyex = p.getPosX() + p.getMaxRadius()*cos(p.getTethaCenter());
       eyey = p.getPosY() + p.getMaxRadius()*sin(p.getTethaCenter());// - sin(p.getTethaCenter())*3.5*p.getRadius(); 
       //eyez = p.getPosZ() + p.getMaxRadius()/10;
@@ -215,6 +256,7 @@ void pickCam() {
       break;
     case 3: // third person
 
+      PrintText(0.1, 0.1, "Third Person", 0, 1, 0);
       glPushMatrix();
         glTranslatef(
           p.getPosX() + p.getMaxRadius()*sin(p.getTethaCenter()) + p.getRadius()*sin(p.getTethaCenter() + tetha_canon_rad),
@@ -240,6 +282,11 @@ void pickCam() {
             upvx, upvy, upvz);
 }
 
+
+// Text variable
+static char str[2000];
+void * font = GLUT_BITMAP_9_BY_15;
+
 void display(void)
 {
   /* Limpar todos os pixels  */
@@ -249,6 +296,16 @@ void display(void)
 
   glViewport(0, 0, larguraDaJanela, alturaDaJanela);
   glLoadIdentity();
+  
+  if (tower_number == 0) {
+    sprintf(str, "Voce ganhou");  
+  } else if (!is_playing) {
+    sprintf(str, "Voce perdeu");
+  } else {
+    sprintf(str, "Towers: %d, Score: %d", tower_number, (int)islands.size()-tower_number);
+  }
+  
+  PrintText(-world.getRadius()+15, world.getRadius()-25, str, 0.7, 0.7, 0.7);
   pickCam();
   //gluLookAt(0.0, 0.0, 150.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
   //gluLookAt(world.getPosX(), world.getPosY(), 7*p.getMaxRadius(), p.getPosX(), p.getPosY(), p.getPosZ(), 0.0, 1.0, 0.0);
@@ -356,9 +413,6 @@ void init (void)
   
 }
 
-// Text variable
-static char str[2000];
-void * font = GLUT_BITMAP_9_BY_15;
 
 void PrintScore(GLfloat x, GLfloat y)
 {
