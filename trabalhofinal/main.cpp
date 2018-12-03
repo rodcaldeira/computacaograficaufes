@@ -58,7 +58,10 @@ int animation_submerge_time;
 int keyStatus[256];
 bool* mouseStates = new bool[3];
 bool is_playing = true;
-
+double mouseX;
+double mouseY;
+int right_button = 0;
+float camera_angle, camera_angle_z;
 /*
 ref para funcao str2int
 https://stackoverflow.com/questions/16388510/evaluate-a-string-with-a-switch-in-c#answer-16388610
@@ -78,24 +81,50 @@ void drawView() {
 
 }
 
-void drawMiniMap() {
-  
-
+void drawCirc(GLfloat x, GLfloat y, GLfloat radius, GLfloat r, GLfloat g, GLfloat b) {
   glPushMatrix();
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    
-    glViewport(larguraDaJanela*0.75, alturaDaJanela*0.75, larguraDaJanela, alturaDaJanela);
-    glOrtho(-0.5, 0.5, -0.5, 0.5, -1, 1);
+	glTranslatef(x, y, 0.0);
+  glColor3f(r, g, b);
+	glBegin(GL_POLYGON);
+	for (int i = 0; i <= 360; i += 360 / 30) {
+		double angle = i * M_PI / 180;
+		glVertex3f(radius * cos(angle), radius * sin(angle), 0.0);
+	}
+	glEnd();
+	glPopMatrix();
+}
 
+void drawMiniMap() {
+  glPushMatrix();
+    
+    glViewport(larguraDaJanela*0.75, 0, larguraDaJanela*0.25, alturaDaJanela*0.25);
+    glLoadIdentity();
+    glDisable(GL_LIGHTING);
+    glDisable(GL_LIGHT0);
+    glDisable(GL_DEPTH_TEST);
     glPushMatrix();
-      glMatrixMode(GL_MODELVIEW);
-      glLoadIdentity();
-      glColor3f(1,1,1);
-      glTranslatef(0,0,-0.8);
-      glutSolidCube(40);
+      glOrtho(-world.getRadius(), world.getRadius(), -world.getRadius(), world.getRadius(), 1000.0, -1000.0);
+      gluLookAt(world.getPosX(), world.getPosY(), 7*p.getMaxRadius(), world.getPosX(), world.getPosY(), 0.0, 0.0, 1.0, 0.0);
+      
+      // draw sea
+      drawCirc(world.getPosX(), world.getPosY(), world.getRadius()/8, 0.0, 0.0, 1.0);  
+      double f = (world.getPosX() + world.getRadius()/8)/(world.getPosX() + world.getRadius());
+      // draw island
+      for (Island i : islands) drawCirc(i.getPosX()*f, i.getPosY()*f, i.getRadius()/8, 0.0, 0.0, 0.0);
+      
+      for (Submarine::submarine e : enemies) drawCirc(e.getPosX()*f, e.getPosY()*f, e.getMaxRadius()/8, 1.0, 0.0, 0.0);
+      drawCirc(p.getPosX()*f, p.getPosY()*f, p.getMaxRadius()/8, 0.0, 1.0, 0.0);
+    //  p.Desenha();
     glPopMatrix();
   glPopMatrix();
+
+  glEnable(GL_LIGHTING);
+  glEnable(GL_LIGHT0);
+  glEnable(GL_DEPTH_TEST);
+}
+
+float gradToRad(float v) {
+  return v * M_PI / 180;
 }
 
 void pickCam() {
@@ -130,9 +159,9 @@ void pickCam() {
             0, 0, 1);
       break;
     case 3: // third person
-      eyex = p.getPosX() - 2.5*p.getRadius()*cos(p.getTethaCenter());
-      eyey = p.getPosY() - sin(p.getTethaCenter())*2.5*p.getRadius();
-      eyez = p.getPosZ() + 2*p.getRadius();
+      eyex = p.getPosX() - 2.5*p.getRadius()*cos(p.getTethaCenter() + gradToRad(camera_angle));
+      eyey = p.getPosY() - 2.5*p.getRadius()*sin(p.getTethaCenter() + gradToRad(camera_angle));
+      eyez = p.getPosZ() + 2*p.getRadius()*cos(gradToRad(camera_angle_z));
 
       poix = p.getPosX();
       poiy = p.getPosY();
@@ -153,33 +182,40 @@ void display(void)
   /* Limpar todos os pixels  */
   glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+  cout << p.getTethaCanon() << " " << p.getTethaCanonZ() << endl;
+
   glViewport(0, 0, larguraDaJanela, alturaDaJanela);
   glLoadIdentity();
-  gluLookAt(0.0, 0.0, 150.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+  pickCam();
+  //gluLookAt(0.0, 0.0, 150.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+  //gluLookAt(world.getPosX(), world.getPosY(), 7*p.getMaxRadius(), p.getPosX(), p.getPosY(), p.getPosZ(), 0.0, 1.0, 0.0);
   //glutWireTeapot(1);
+  world.Desenha();
   p.Desenha();
+  GLfloat light_position[] = {world.getPosX(), world.getPosY(), world.getRadius()*2, 1.0};
+  glLightfv(GL_LIGHT0, GL_POSITION, light_position);
+  /* Desenhar um polígono branco (retângulo) */
+
+  world.Desenha();
+  for (Island i : islands) i.Desenha();
+  for (Torpedo t : torpedos) t.Desenha();
+  for (Torpedo et : e_torpedos) et.Desenha(); 
+  p.Desenha();
+  for (Submarine::submarine e : enemies) e.Desenha();
+  //  if (mouseStates[GLUT_RIGHT_BUTTON]) {
+  //    mouse_info.Desenha();
+  //  }
+
+  //p.setPosX(p.getPosX()+(GLfloat)0.01);
   //
   // glViewport(width/2, 0, width/2, height/2);
   // glLoadIdentity();
   // gluLookAt(0.0, 0.0, 3.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
   // glutWireTeapot(1);
-  // p.setPosX(0.0);
+  // p.setPosX(0.0);  
   // p.setPosY(0.0);
 // minimap
-  glViewport(larguraDaJanela*0.75, alturaDaJanela*0.75, larguraDaJanela*0.25, alturaDaJanela*0.25);
-  glLoadIdentity();
-  glPushMatrix();
-    glOrtho(-world.getRadius(), world.getRadius(), -world.getRadius(), world.getRadius(), 1000.0, -1000.0);
-    gluLookAt(world.getPosX(), world.getPosY(), 7*p.getMaxRadius(), world.getPosX(), world.getPosY(), 0.0, 1.0, 0.0, 0.0);
-    glutSolidCube(5);
-    // draw circle
-    glBegin(GL_POLYGON);
-    for (int i = 0; i <= 360; i+=10) {
-      glVertex2d(p.getPosX() + p.getMaxRadius()/5*cos(i), p.getPosY() + p.getMaxRadius()/5*sin(i));
-    }
-    glEnd();
-  //  p.Desenha();
-  glPopMatrix();
+  drawMiniMap();
   
   //
   // glViewport(width/2, height/2, width/2, height/2);
@@ -225,7 +261,7 @@ void display(void)
   // //  }
   // //  PrintScore(180.0, 15.0);
 
-  //  pickCam();
+   
    /* Não esperar! */
    glutSwapBuffers ();
 }
@@ -241,15 +277,15 @@ void init (void)
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   //glFrustum(-1.0, 1.0, -1.0, 1.0, 1.5, 20.0);
-  gluPerspective(90, (GLdouble)alturaDaJanela/(GLdouble)larguraDaJanela, 0.1, 150.0);
+  gluPerspective(90, (GLdouble)alturaDaJanela/(GLdouble)larguraDaJanela, 0.1, 1000.0);
   glMatrixMode(GL_MODELVIEW);
   
   /* inicializar sistema de viz. */
   // glShadeModel(GL_SMOOTH);
 
-  // glEnable(GL_LIGHTING);
-  // glEnable(GL_LIGHT0);
-  // glEnable(GL_DEPTH_TEST);
+  glEnable(GL_LIGHTING);
+  glEnable(GL_LIGHT0);
+  glEnable(GL_DEPTH_TEST);
   
 }
 
@@ -305,6 +341,9 @@ void keyup(unsigned char key, int x, int y)
     case 'U':
       keyStatus[(int)('u')] = 0;
       break;
+    case 'j':
+    case 'J':
+      keyStatus[(int)('j')] = 0;
   }
   glutPostRedisplay();
 }
@@ -333,8 +372,12 @@ void keyPress(unsigned char key, int x, int y)
     case 'U':
       keyStatus[(int)('u')] = 1;
       break;
-      case 27 :
-           exit(0);
+    case 'j':
+    case 'J':
+      keyStatus[(int)('j')] = 1;
+      break;
+    case 27 :
+      exit(0);
   }
   glutPostRedisplay();
 }
@@ -345,34 +388,76 @@ void mouse(int button, int state, int x, int y) {
   y = glutGet(GLUT_WINDOW_HEIGHT) - y;
   x += dx;
   y += dy;
-  if (p.getSubmerginStatus() == -1) {
-    if (button == GLUT_LEFT_BUTTON) { // para frente
-      if (state == GLUT_DOWN) {
-        torpedos.push_back(Torpedo(p.getPosX(), p.getPosY(), p.getTethaCenter(), p.getRadius()/12, p.getSubmerginStatus(), x, y));
-      }
-    }
-    if (button == GLUT_RIGHT_BUTTON) { // para cima
-      if (state == GLUT_DOWN) {
-        mouse_info.setPosX(x);
-        mouse_info.setPosY(y);
-        mouseStates[button] = true;
-      } else {
-        mouseStates[button] = false;
-        torpedos.push_back(Torpedo(p.getPosX(), p.getPosY(), p.getTethaCenter(), p.getRadius()/12, 1, x, y));
-      }
+
+  if (button == GLUT_LEFT_BUTTON) { // para frente
+    if (state == GLUT_DOWN) {
+      torpedos.push_back(Torpedo(p.getPosX(), p.getPosY(), p.getTethaCenter(), p.getRadius()/12, p.getSubmerginStatus(), x, y));
     }
   }
+  if (button == GLUT_RIGHT_BUTTON) { // para cima
+    if (state == GLUT_DOWN) {
+      mouse_info.setPosX(x);
+      mouse_info.setPosY(y);
+      mouseX = x;
+      mouseY = y;
+      mouseStates[button] = true;
+      right_button = 1;
+    } else {
+      mouseStates[button] = false;
+      right_button = 0;
+      torpedos.push_back(Torpedo(p.getPosX(), p.getPosY(), p.getTethaCenter(), p.getRadius()/12, 1, x, y));
+    }
+  }
+
 }
 
 void dragAndDrop(int x, int y) {
   GLint dx = world.getPosX() - world.getRadius();
   GLint dy = world.getPosY() - world.getRadius();
   y = glutGet(GLUT_WINDOW_HEIGHT) - y;
+
+  float perc = 0.0;
+  float w2 = (float)larguraDaJanela/2;
+  float h2 = (float)alturaDaJanela/2;
+  int tmp_x = x;
+  int tmp_y = y;
+  if (tmp_x < w2) {
+    if (tmp_x < 0) tmp_x = 0.0;
+    perc = w2 - tmp_x;
+    p.setTethaCanon(-30.0 * perc/w2);
+  } else {
+    if (tmp_x > larguraDaJanela) tmp_x = larguraDaJanela;
+    perc = tmp_x - w2;
+    p.setTethaCanon(30.0 * perc/w2);
+  }
+  if (tmp_y < h2) {
+    if (tmp_y < 0) tmp_y = 0.0;
+    perc = h2 - tmp_y;
+    p.setTethaCanonZ(-30.0 * perc/h2);
+  } else {
+    if (tmp_y > alturaDaJanela) tmp_y = alturaDaJanela;
+    perc = tmp_y - h2;
+    p.setTethaCanonZ(30.0 * perc/h2);
+  }
   x += dx;
   y += dy;
-
+  
+  
+  // if (y > mouseY) {
+  //   p.MoveCanon(1.0);
+  // } else if (y < mouseY) {
+  //   p.MoveCanon(-1.0);
+  // }
+  mouseX = x;
+  mouseY = y;
   mouse_info.setPosX(x);
   mouse_info.setPosY(y);
+  // if (mouseStates[GLUT_RIGHT_BUTTON] == true) {
+  if (right_button == 1) {
+    //cout << "a" << endl;
+    camera_angle = (mouseX * 180)/((float)larguraDaJanela/2);
+    camera_angle_z = (mouseY * 35)/((float)alturaDaJanela/2);
+  }
   glutPostRedisplay();
 }
 
@@ -397,7 +482,11 @@ void updatePlayer(GLdouble timeDiff) {
   }
   if(keyStatus[(int)('u')])
   {
-    cout << "submerge" << endl;
+    p.submerge(timeDiff*1);
+  }
+  if(keyStatus[(int)('j')])
+  {
+    p.submerge(timeDiff*(-1));
   }
   // handling idle moves and collision
   p.updateHeli(timeDiff);
@@ -574,61 +663,63 @@ int main(int argc, char ** argv) {
       world.setRadius(r);
       world.setId(id);
       break;
-    case str2int("red"):
-      // red em rgb: 1, 0, 0
-      // enemies.push_back(Submarine::submarine());
-      // enmy = enemies.end();
-      new_enmy.setR(1.0);
-      new_enmy.setG(0.0);
-      new_enmy.setB(0.0);
-      new_enmy.setPosX(cx-world_pos_x);
-      // new_enmy.setPosY(2 * world.getPosY() - cy);
-      new_enmy.setPosY(-1*(cy-world_pos_y));
-      new_enmy.setPosZ(2*r);
-      new_enmy.setId(id);
-      new_enmy.setRadius(r);
-      new_enmy.setMaxRadius(r);
-      new_enmy.setSubmerginStatus(1);
-      new_enmy.setVel(enemy_vel);
-      new_enmy.setVelTiro(enemy_vel_tiro);
-      rgb[0] = 1.0;
-      rgb[1] = 0.0;
-      rgb[2] = 0.0;
-      enemies.push_back(new_enmy);
-      //enemies.push_back(Enemy(id, rgb, cx, cy, 0.0, r));
-      break;
-    case str2int("green"):
-      // verde em rgb: 0, 0, 1
-      rgb[0] = 0.0;
-      rgb[1] = 1.0;
-      rgb[2] = 0.0;
-      // cy = 2 * world.getPosY() - cy;
-      cy = -(cy-world_pos_y);
-      p.setPosX(cx - world_pos_x);
-      p.setPosY(cy);
-      p.setPosZ(r*4);
-      p.setRadius(r);
-      p.setMaxRadius(r);
-      p.setMaxHeight(r*4);
-      p.setMinHeight(r/2);
-      //p.setColor(rgb);
-      p.setR(rgb[0]);
-      p.setG(rgb[1]);
-      p.setB(rgb[2]);
-      p.setId(id);
-      mouse_info.setRadius(r);
-      break;
-			case str2int("black"):
-				// preto em rgb: 0, 0, 0
+      case str2int("red"):
+        // red em rgb: 1, 0, 0
+        // enemies.push_back(Submarine::submarine());
+        // enmy = enemies.end();
+        new_enmy.setR(1.0);
+        new_enmy.setG(0.0);
+        new_enmy.setB(0.0);
+        new_enmy.setPosX(cx-world_pos_x);
+        // new_enmy.setPosY(2 * world.getPosY() - cy);
+        new_enmy.setPosY(-1*(cy-world_pos_y));
+        new_enmy.setPosZ(2*r);
+        new_enmy.setId(id);
+        new_enmy.setRadius(r);
+        new_enmy.setMaxRadius(r);
+        new_enmy.setSubmerginStatus(1);
+        new_enmy.setVel(enemy_vel);
+        new_enmy.setVelTiro(enemy_vel_tiro);
+        rgb[0] = 1.0;
+        rgb[1] = 0.0;
+        rgb[2] = 0.0;
+        enemies.push_back(new_enmy);
+        //enemies.push_back(Enemy(id, rgb, cx, cy, 0.0, r));
+        break;
+      case str2int("green"):
+        // verde em rgb: 0, 0, 1
+        rgb[0] = 0.0;
+        rgb[1] = 1.0;
+        rgb[2] = 0.0;
+        // cy = 2 * world.getPosY() - cy;
+        cy = -(cy-world_pos_y);
+        p.setPosX(cx - world_pos_x);
+        p.setPosY(cy);
+        p.setPosZ(r*4);
+        p.setRadius(r);
+        p.setMaxRadius(r);
+        p.setMaxHeight(r*4);
+        p.setMinHeight(r/2);
+        //p.setColor(rgb);
+        p.setR(rgb[0]);
+        p.setG(rgb[1]);
+        p.setB(rgb[2]);
+        p.setId(id);
+        mouse_info.setRadius(r);
+        break;
+      case str2int("black"):
+        // preto em rgb: 0, 0, 0
         tower_number++;
-				rgb[0] = 0.0;
-				rgb[1] = 0.0;
-				rgb[2] = 0.0;
-        cy = 2*world.getPosY() - cy;
+        rgb[0] = 0.0;
+        rgb[1] = 0.0;
+        rgb[2] = 0.0;
+        //cy = 2*world.getPosY() - cy;
+        cy = -(cy-world_pos_y);
+        cx = (cx - world_pos_x);
         islands.push_back(Island(id, rgb, cx, cy, 0.0, r, r*(tower_size/100), p.getMaxRadius()*4));
-				break;
-			default:
-				break;
+        break;
+      default:
+        break;
 		}
 		tmp_xml = tmp_xml->NextSiblingElement("circle");
 	}
@@ -643,6 +734,7 @@ int main(int argc, char ** argv) {
   glutDisplayFunc(display);
   glutIdleFunc(idle);
   glutMouseFunc(mouse);
+  glutPassiveMotionFunc(dragAndDrop);
   glutMotionFunc(dragAndDrop);
   glutMainLoop();
 

@@ -23,6 +23,8 @@ submarine::submarine() {
 	setTethaCenter(90.0);
 	setTethaHeli(0.0);
 	setTethaPaddle(0.0);
+	setTethaCanon(0.0);
+	setTethaCanonZ(0.0);
 	setMovingZAxis(false);
 	setCanMove(true);
 	setToDelete(false);
@@ -31,6 +33,22 @@ submarine::submarine() {
 	setDirectionSubY(sin(getTethaCenter()));
 	setDirectionSteeringX(cos(getTethaPaddle()));
 	setDirectionSteeringY(sin(getTethaPaddle()));
+}
+
+void submarine::setTethaCanon(GLfloat a) {
+	tetha_canon = a;
+}
+
+GLfloat submarine::getTethaCanon() {
+	return tetha_canon;
+}
+
+void submarine::setTethaCanonZ(GLfloat a) {
+	tetha_canon_z = a;
+}
+
+GLfloat submarine::getTethaCanonZ() {
+	return tetha_canon_z;
 }
 
 GLfloat submarine::getB() const {
@@ -211,6 +229,38 @@ void submarine::Move(GLdouble d) {
 	}
 }
 
+void submarine::MoveCanon(GLfloat da) {
+	if (da > 0) {
+		if (tetha_canon <= 30.0) {
+			tetha_canon += da;
+		} else {
+			tetha_canon = 30.0;
+		}
+	} else {
+		if (tetha_canon >= -30.0) {
+			tetha_canon -= da;
+		} else {
+			tetha_canon = -30.0;
+		}
+	}
+}
+
+void submarine::MoveCanonZ(GLfloat daz) {
+	if (daz > 0) {
+		if (tetha_canon_z <= 30.0) {
+			tetha_canon_z += daz;
+		} else {
+			tetha_canon_z = 30.0;
+		}
+	} else {
+		if (tetha_canon_z >= -30.0) {
+			tetha_canon_z -= daz;
+		} else {
+			tetha_canon_z = -30.0;
+		}
+	}
+}
+
 void submarine::incTicks() {
 	ticks++;
 }
@@ -246,7 +296,7 @@ void submarine::RotateTethaHeli(GLfloat ang) {
 void submarine::DesenhaSubmarine(GLfloat x, GLfloat y, GLfloat radius, GLfloat cR,
 		GLfloat cG, GLfloat cB) {
 	GLfloat materialEmisison[] = {0.0, 0.0, 0.0, 1.0};
-	GLfloat materialColor[] = {0.0, 0.0, 1.0, 1.0};
+	GLfloat materialColor[] = {0.0, 1.0, 0.0, 1.0};
 	//GLfloat materialColorAMB[] = {1.0, 1.0, 0.0, 1.0};
 	GLfloat mat_specular[] = {1.0, 1.0, 1.0, 1.0};
 	GLfloat mat_shininess[] = { 128 };
@@ -264,7 +314,19 @@ void submarine::DesenhaSubmarine(GLfloat x, GLfloat y, GLfloat radius, GLfloat c
 		glPushMatrix();
 			glScalef(1.0, 0.3, 0.3);
 			glutSolidSphere(radius, 20, 10);
-			
+		glPopMatrix();
+
+		glPushMatrix();
+			glTranslatef(radius-radius/20, 0.0, 0.0);
+			glColor3f(0.0, 0.0, 0.0);
+			glRotatef(90, 0.0, 1.0, 0.0);
+			glRotatef(tetha_canon, 0, 0, 1);
+			glRotatef(tetha_canon_z, 0, 1, 0);
+			GLUquadricObj *quadric=gluNewQuadric();
+			gluQuadricNormals(quadric, GLU_SMOOTH);
+			gluQuadricOrientation(quadric,GLU_OUTSIDE);
+			gluCylinder(quadric, radius/30, radius/30, radius/5, 32, 1);
+			gluDeleteQuadric(quadric);
 		glPopMatrix();
 		
 		glPushMatrix();
@@ -273,7 +335,6 @@ void submarine::DesenhaSubmarine(GLfloat x, GLfloat y, GLfloat radius, GLfloat c
 			glRotatef(90, 0, 0, 1);
 			glScalef(0.02, 1.0, 0.3);
 			glPushMatrix();
-				
 				glTranslatef(0, radius/3, 0);
 				glutSolidCube(radius/2);
 			glPopMatrix();
@@ -469,12 +530,13 @@ void submarine::MoveZ(GLfloat dz) {
 }
 
 void submarine::submerge(int milisec) {
-	if (milisec == 1) {
+	if (milisec > 0) {
 		if (pos_z >= max_height) pos_z = 80.0f;
-	} else if (milisec == -1) {
+	} else if (milisec < 0) {
 		if (pos_z <= min_height) pos_z = 10.0f;
 	}
-	MoveZ((vel/5)*milisec);
+	//MoveZ((vel/5)*milisec);
+	MoveZ(milisec*(vel/5));
 	
 	// if (!getMovingZAxis()) {
 	// 	return;

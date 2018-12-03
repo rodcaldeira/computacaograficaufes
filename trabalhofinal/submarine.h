@@ -46,6 +46,8 @@ class submarine
 	GLfloat tetha_center;
 	GLfloat tetha_paddle;
 	GLfloat tetha_heli;
+	GLfloat tetha_canon;
+	GLfloat tetha_canon_z;
 
 	GLfloat velTiro;
 	GLfloat vel;
@@ -109,6 +111,11 @@ class submarine
 	void setTethaPaddle(GLfloat tethaPaddle);
 	bool getToDelete() const;
 	void setToDelete(bool status);
+	void setTethaCanon(GLfloat a);
+	GLfloat getTethaCanon();
+	void setTethaCanonZ(GLfloat a);
+	GLfloat getTethaCanonZ();
+
 
 	bool checkHit(GLfloat x, GLfloat y, GLfloat z, GLfloat r);
 	void Move(GLdouble d);
@@ -118,6 +125,8 @@ class submarine
 	void RotateTethaCenter(GLfloat ang);
 	void RotateTethaHeli(GLfloat ang);
 	void RotateTethaPaddle(GLfloat ang);
+	void MoveCanon(GLfloat da);
+	void MoveCanonZ(GLfloat daz);
 
 	void updateHeli(GLdouble timeDiff);
 	GLfloat getMinHeight();
