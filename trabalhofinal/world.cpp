@@ -19,7 +19,7 @@ void Island::DesenhaIsland(GLfloat x, GLfloat y, GLfloat z,
   glPushMatrix();
     glTranslatef(x, y, z);
     DesenhaCylinder(x, y, z, radius, height, R, G, B);
-    //DesenhaCircle(x, y, radius, R, G, B);
+    DesenhaCircle(x, y, radius, R, G, B);
     if (alive) {
       DesenhaSphere(x, y, z, tower_radius, 1.0, 1.0, 0.0);
       //DesenhaCircle(x, y, tower_radius, 1.0, 1.0, 0.0);
@@ -32,6 +32,7 @@ void Island::DesenhaCylinder(GLfloat x, GLfloat y, GLfloat z, GLfloat rad, GLflo
     glColor3f(0.0, 0.0, 0.0);
     GLUquadricObj *quadric=gluNewQuadric();
     gluQuadricNormals(quadric, GLU_SMOOTH);
+    gluQuadricOrientation(quadric,GLU_OUTSIDE);
     gluCylinder(quadric, radius, radius, height, 32, 1);
     gluDeleteQuadric(quadric);
   glPopMatrix();
@@ -116,6 +117,17 @@ void Sea::DesenhaCircle(GLfloat x, GLfloat y, GLfloat rad, GLfloat R, GLfloat G,
      for(double i = 0; i < 2 * PI; i += PI / 36)
        glVertex3f(cos(i) * rad, sin(i) * rad, 0.0);
   glEnd();
+}
+
+void Sea::DesenhaCylinder(GLfloat x, GLfloat y, GLfloat z, GLfloat rad, GLfloat h, GLfloat R, GLfloat G, GLfloat B) {
+  glPushMatrix();
+    glColor3f(0.0, 0.0, 0.0);
+    GLUquadricObj *quadric=gluNewQuadric();
+    gluQuadricNormals(quadric, GLU_SMOOTH);
+    gluQuadricOrientation(quadric,GLU_OUTSIDE);
+    gluCylinder(quadric, radius, radius, height, 32, 1);
+    gluDeleteQuadric(quadric);
+  glPopMatrix();
 }
 
 void Sea::DesenhaSea(GLfloat x, GLfloat y, GLfloat pos_z, GLfloat radius, GLfloat R, GLfloat G, GLfloat B) {

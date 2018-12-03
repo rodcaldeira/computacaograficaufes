@@ -50,6 +50,8 @@ GLfloat tower_size;
 GLfloat enemy_shot_freq;
 GLfloat enemy_vel;
 GLfloat enemy_vel_tiro;
+int alturaDaJanela=500;
+int larguraDaJanela=500;
 int tower_number;
 int animation_submerge_time;
 //Key status
@@ -57,12 +59,6 @@ int keyStatus[256];
 bool* mouseStates = new bool[3];
 bool is_playing = true;
 
-
-bool collisionTest = false;
-bool collision[4] = {false, false, false, false}; // 0 - north
-                                                  // 1 - east
-                                                  // 2 - south
-                                                  // 3 - west
 /*
 ref para funcao str2int
 https://stackoverflow.com/questions/16388510/evaluate-a-string-with-a-switch-in-c#answer-16388610
@@ -76,37 +72,160 @@ constexpr unsigned int str2int(const char* str, int h = 0)
     return !str[h] ? 5381 : (str2int(str, h+1) * 33) ^ str[h];
 }
 
-bool collisionDetection(GLfloat x1, GLfloat y1, GLfloat r1, GLfloat x2, GLfloat y2, GLfloat r2) {
-  if ( sqrt(pow((x1-x2),2) + pow((y1-y2),2)) < r1+r2 ) return true;
-  return false;
+int camera = 3;
+
+void drawView() {
+
 }
 
-bool pointInsideCircle(GLfloat px, GLfloat py, GLfloat cx, GLfloat cy, GLfloat cr) {
-  if (sqrt( pow(px-cx, 2) + pow(py-cy, 2) ) < cr) return true;
-  return false;
+void drawMiniMap() {
+  
+
+  glPushMatrix();
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    
+    glViewport(larguraDaJanela*0.75, alturaDaJanela*0.75, larguraDaJanela, alturaDaJanela);
+    glOrtho(-0.5, 0.5, -0.5, 0.5, -1, 1);
+
+    glPushMatrix();
+      glMatrixMode(GL_MODELVIEW);
+      glLoadIdentity();
+      glColor3f(1,1,1);
+      glTranslatef(0,0,-0.8);
+      glutSolidCube(40);
+    glPopMatrix();
+  glPopMatrix();
 }
 
-GLfloat calcDist2d(GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2) {
-  return sqrt( pow(x1 - x2, 2) + pow(y1 - y2, 2) );
+void pickCam() {
+  GLfloat eyex;
+  GLfloat eyey;
+  GLfloat eyez;
+
+  GLfloat poix;
+  GLfloat poiy;
+  GLfloat poiz;
+
+  GLfloat upvx;
+  GLfloat upvy;
+  GLfloat upvz;
+  switch(camera) {
+    case 1: // first person
+      eyex = p.getPosX();
+      eyey = p.getPosY();
+      eyez = p.getPosZ() + p.getMaxRadius()*0.3;
+
+      poix = p.getPosX() + 10*p.getRadius()*cos(p.getTethaCenter());
+      poiy = p.getPosY() + 10*p.getRadius()*sin(p.getTethaCenter());
+      poiz = p.getPosZ();
+
+      upvx = 0.0;
+      upvy = 0.0;
+      upvz = 1.0;
+      break;
+    case 2:
+      gluLookAt(p.getPosX() - 3.5*p.getRadius()*cos(p.getTethaCenter()), p.getPosY() - sin(p.getTethaCenter())*3.5*p.getRadius(), p.getPosZ() + 2*p.getRadius(),
+            p.getPosX(), p.getPosY(), p.getPosZ(),
+            0, 0, 1);
+      break;
+    case 3: // third person
+      eyex = p.getPosX() - 2.5*p.getRadius()*cos(p.getTethaCenter());
+      eyey = p.getPosY() - sin(p.getTethaCenter())*2.5*p.getRadius();
+      eyez = p.getPosZ() + 2*p.getRadius();
+
+      poix = p.getPosX();
+      poiy = p.getPosY();
+      poiz = p.getPosZ();
+
+      upvx = 0.0;
+      upvy = 0.0;
+      upvz = 1.0;
+      break;
+  }
+  gluLookAt(eyex, eyey, eyez,
+            poix, poiy, poiz,
+            upvx, upvy, upvz);
 }
 
 void display(void)
 {
-   /* Limpar todos os pixels  */
-   glClear (GL_COLOR_BUFFER_BIT);
+  /* Limpar todos os pixels  */
+  glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-   /* Desenhar um polígono branco (retângulo) */
+  glViewport(0, 0, larguraDaJanela, alturaDaJanela);
+  glLoadIdentity();
+  gluLookAt(0.0, 0.0, 150.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+  //glutWireTeapot(1);
+  p.Desenha();
+  //
+  // glViewport(width/2, 0, width/2, height/2);
+  // glLoadIdentity();
+  // gluLookAt(0.0, 0.0, 3.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+  // glutWireTeapot(1);
+  // p.setPosX(0.0);
+  // p.setPosY(0.0);
+// minimap
+  glViewport(larguraDaJanela*0.75, alturaDaJanela*0.75, larguraDaJanela*0.25, alturaDaJanela*0.25);
+  glLoadIdentity();
+  glPushMatrix();
+    glOrtho(-world.getRadius(), world.getRadius(), -world.getRadius(), world.getRadius(), 1000.0, -1000.0);
+    gluLookAt(world.getPosX(), world.getPosY(), 7*p.getMaxRadius(), world.getPosX(), world.getPosY(), 0.0, 1.0, 0.0, 0.0);
+    glutSolidCube(5);
+    // draw circle
+    glBegin(GL_POLYGON);
+    for (int i = 0; i <= 360; i+=10) {
+      glVertex2d(p.getPosX() + p.getMaxRadius()/5*cos(i), p.getPosY() + p.getMaxRadius()/5*sin(i));
+    }
+    glEnd();
+  //  p.Desenha();
+  glPopMatrix();
+  
+  //
+  // glViewport(width/2, height/2, width/2, height/2);
+  // glLoadIdentity();
+  // gluLookAt(0.0, -3.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0);
+  // glutWireTeapot(1);
 
-   world.Desenha();
-   for (Island i : islands) i.Desenha();
-   for (Torpedo t : torpedos) t.Desenha();
-   for (Torpedo et : e_torpedos) et.Desenha(); 
-   p.Desenha();
-   for (Submarine::submarine e : enemies) e.Desenha();
-   if (mouseStates[GLUT_RIGHT_BUTTON]) {
-     mouse_info.Desenha();
-   }
-   PrintScore(180.0, 15.0);
+  // glViewport(0, alturaDaJanela, larguraDaJanela, alturaDaJanela);
+  // glColor3f(1.0f, 0.0f, 0.0f);
+
+  // glMatrixMode(GL_PROJECTION);
+  // glLoadIdentity();
+  // glOrtho(-3.0, 3.0, -3.0, 3.0, 1.0, 50.0);
+  // gluLookAt(0.0, 5.0, 0.0,
+  //         0.0, 0.0, 0.0,
+  //         0.0, 0.0, -1.0);
+
+  // glMatrixMode(GL_MODELVIEW);
+  // glLoadIdentity();
+  // glutSolidCube(1);
+  // //glMatrixMode(GL_PROJECTION);
+
+
+  //  glMatrixMode(GL_MODELVIEW);
+  //  glLoadIdentity();
+  // //  gluLookAt(world.getPosX(), world.getPosY(), world.getPosZ()+world.getRadius()*2, 
+  // //            world.getPosX(), world.getPosY(), world.getPosZ(),
+  // //            0, 1, 0);
+  // drawMiniMap();
+
+  //  GLfloat light_position[] = {world.getPosX(), world.getPosY(), world.getRadius()*2, 1.0};
+  //  glLightfv(GL_LIGHT0, GL_POSITION, light_position);
+  //  /* Desenhar um polígono branco (retângulo) */
+
+  //  //world.Desenha();
+  // //  for (Island i : islands) i.Desenha();
+  // //  for (Torpedo t : torpedos) t.Desenha();
+  // //  for (Torpedo et : e_torpedos) et.Desenha(); 
+  // //  p.Desenha();
+  // //  for (Submarine::submarine e : enemies) e.Desenha();
+  // //  if (mouseStates[GLUT_RIGHT_BUTTON]) {
+  // //    mouse_info.Desenha();
+  // //  }
+  // //  PrintScore(180.0, 15.0);
+
+  //  pickCam();
    /* Não esperar! */
    glutSwapBuffers ();
 }
@@ -118,19 +237,20 @@ void init (void)
   p.setTethaPaddle(0.0);
 
   /* selecionar cor de fundo (preto) */
-  glClearColor (0.5, 0.5, 0.5, 0.0);
-
-  /* inicializar sistema de viz. */
+  glClearColor (0.0, 0.0, 0.0, 0.0);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  glOrtho(world.getPosX() - world.getRadius(),
-          world.getPosX() + world.getRadius(),
-          world.getPosY() - world.getRadius(),
-          world.getPosY() + world.getRadius(),
-          -100.0,
-          100.0);
+  //glFrustum(-1.0, 1.0, -1.0, 1.0, 1.5, 20.0);
+  gluPerspective(90, (GLdouble)alturaDaJanela/(GLdouble)larguraDaJanela, 0.1, 150.0);
   glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity();
+  
+  /* inicializar sistema de viz. */
+  // glShadeModel(GL_SMOOTH);
+
+  // glEnable(GL_LIGHTING);
+  // glEnable(GL_LIGHT0);
+  // glEnable(GL_DEPTH_TEST);
+  
 }
 
 // Text variable
@@ -164,26 +284,21 @@ void PrintScore(GLfloat x, GLfloat y)
 void keyup(unsigned char key, int x, int y)
 {
   keyStatus[(int)(key)] = 0;
-  for (int i = 0; i < 4; i++) collision[i] = true;
   switch (key) {
     case 'w':
     case 'W':
-      collision[0] = false;
       keyStatus[(int)('w')] = 0;
       break;
     case 'd':
     case 'D':
-      collision[1] = false;
       keyStatus[(int)('d')] = 0;
       break;
     case 's':
     case 'S':
-      collision[2] = false;
       keyStatus[(int)('s')] = 0;
       break;
     case 'a':
     case 'A':
-      collision[3] = false;
       keyStatus[(int)('a')] = 0;
       break;
     case 'u':
@@ -193,76 +308,6 @@ void keyup(unsigned char key, int x, int y)
   }
   glutPostRedisplay();
 }
-
-bool canMove(GLfloat d, const Submarine::submarine& s) {
-
-  GLfloat r;
-  GLfloat move_delta;
-  GLfloat cx, cy, c_angle, s_angle;
-  if (fabs(s.getTethaPaddle()) < 0.02) {
-    cx = s.getPosX() + d*cos(s.getTethaCenter());
-    cy = s.getPosY() + d*sin(s.getTethaCenter());
-  } else {
-    r = s.getRadius()/tan(-s.getTethaPaddle());
-    move_delta = -d/r;
-
-    c_angle = -M_PI_2 + s.getTethaCenter();
-    s_angle = M_PI_2 + s.getTethaCenter() + move_delta;
-
-    cx = s.getPosX() + r*(cos(c_angle));
-    cy = s.getPosY() + r*(sin(c_angle));
-
-    cx += r*cos(s_angle);
-    cy += r*sin(s_angle);
-  }
-  bool coll = false;
-  // verify collision with island
-  for (Island i : islands) {
-    if (collisionDetection(i.getPosX(),
-                           i.getPosY(),
-                           i.getRadius(),
-                           cx,
-                           cy,
-                           s.getMaxRadius())) {
-                             /* std::cout << "collision with island" << std::endl; */
-       coll = true;
-     }
-  }
-
-  // verify collision with enemies
-  
-  GLint id = s.getId();
-  for (Submarine::submarine e : enemies) {
-    if ((id != e.getId()) && (s.getSubmerginStatus() == e.getSubmerginStatus()) && collisionDetection(e.getPosX(),
-                            e.getPosY(),
-                            e.getRadius(),
-                            cx,
-                            cy,
-                            s.getMaxRadius())) {
-                              /* std::cout << "collision with submarine" << std::endl; */
-        coll = true;
-      }
-  }
-
-  if (id != p.getId()) {
-    if ((s.getSubmerginStatus() == p.getSubmerginStatus()) && collisionDetection(p.getPosX(),
-                            p.getPosY(),
-                            p.getRadius(),
-                            cx,
-                            cy,
-                            s.getMaxRadius())) {
-                              /* std::cout << "collision with submarine" << std::endl; */
-        coll = true;
-      }
-  }
-  
-  // verify if try to leave the world
-  if (sqrt(pow((cx-world.getPosX()),2) + pow((cy-world.getPosY()),2)) >= world.getRadius() - s.getMaxRadius()) {
-    coll = true;
-  }
-  return coll;
-}
-
 
 void keyPress(unsigned char key, int x, int y)
 {
@@ -331,98 +376,12 @@ void dragAndDrop(int x, int y) {
   glutPostRedisplay();
 }
 
-void updateTorpedos(GLdouble timeDiff) {
-  for (tps = torpedos.begin(); tps != torpedos.end(); ++tps) {
-    tps->Move(timeDiff, p.getVelTiro());
-    if (sqrt(pow((tps->getPosX()-world.getPosX()),2) + pow((tps->getPosY()-world.getPosY()),2)) >= world.getRadius() - tps->getRadius()) {
-      tps->setToDelete(true);
-    }
-    if (tps->getType() == -1) { //retilinio
-      GLfloat px = tps->getPosX();
-      GLfloat py = tps->getPosY();
-      for (Island i : islands) {
-        if (pointInsideCircle(px, py, i.getPosX(), i.getPosY(), i.getRadius())) tps->setToDelete(true);
-      }
-      for (enmy = enemies.begin(); enmy != enemies.end(); ++enmy) {
-        if (pointInsideCircle(px, py, enmy->getPosX(), enmy->getPosY(), enmy->getRadius())) {
-          tps->setToDelete(true);
-          enmy->setToDelete(true);
-        }
-      }
-      /* for (Submarine::submarine e : enemies) {
-        if (pointInsideCircle(px, py, e.getPosX(), e.getPosY(), e.getRadius())) tps->setToDelete(true);
-      } */
-    } else { // superior
-      GLfloat px = tps->getPosX();
-      GLfloat py = tps->getPosY();
-      GLfloat tx = tps->getTargetX();
-      GLfloat ty = tps->getTargetY();
-      GLfloat r_mouse = mouse_info.getRadius(); // se o target está proximo do local + error
-      if (fabs(tx - px) <= 1 && fabs(ty - py) <= 1) {
-        for (isl = islands.begin(); isl != islands.end(); ++isl) {
-        // verificar se
-        // o local do torpedo está proximo ao centro da ilha (com raio de porcentagem)
-          if ((isl->getAlive() == true) && collisionDetection(px, py, r_mouse, isl->getPosX(), isl->getPosY(), isl->getRadius()*(isl->getTowerPerc()/100))) {
-            isl->setAlive(false);
-            tower_number--;
-          }
-        } 
-      }
-    }
-  }
-  del_tps = torpedos.begin();
-  tps = torpedos.begin();
-  while (tps != torpedos.end()) {
-    if (tps->getToDelete()) {
-      del_tps = tps;
-      tps++;
-      torpedos.erase(del_tps);
-
-    } else {
-      tps++;
-    }
-  }
-  
-  //std::cout << e_torpedos.size() << std::endl;
-  for (tps = e_torpedos.begin(); tps != e_torpedos.end(); ++tps) {
-    tps->Move(timeDiff, enemy_vel_tiro);  
-    if (sqrt(pow((tps->getPosX()-world.getPosX()),2) + pow((tps->getPosY()-world.getPosY()),2)) >= world.getRadius() - tps->getRadius()) {
-      tps->setToDelete(true);
-    }
-    if (tps->getType() == -1) { //retilinio
-      GLfloat px = tps->getPosX();
-      GLfloat py = tps->getPosY();
-      for (Island i : islands) {
-        if (pointInsideCircle(px, py, i.getPosX(), i.getPosY(), i.getRadius())) {
-          tps->setToDelete(true);
-        }
-      }
-      if ((p.getSubmerginStatus() == -1) && pointInsideCircle(px, py, p.getPosX(), p.getPosY(), p.getRadius())) {
-        is_playing = false;
-        tps->setToDelete(true);
-      }
-    }
-  }
-  del_tps = e_torpedos.begin();
-  tps = e_torpedos.begin();
-  while (tps != e_torpedos.end()) {
-    if (tps->getToDelete()) {
-      del_tps = tps;
-      tps++;
-      e_torpedos.erase(del_tps);
-    } else {
-      tps++;
-    }
-  }
-}
-
 void updatePlayer(GLdouble timeDiff) {
   float dist = p.getVel() * timeDiff;
   //Treat keyPress
   if(keyStatus[(int)('w')])
   {
-    collision[0] = canMove(dist, p);
-    if (!collision[0]) p.Move(dist);
+    cout << "move forward" << endl;
   }
   if(keyStatus[(int)('d')])
   {
@@ -430,8 +389,7 @@ void updatePlayer(GLdouble timeDiff) {
   }
   if(keyStatus[(int)('s')])
   {
-    collision[2] = canMove(-dist, p);
-    if (!collision[2]) p.Move(-dist); //p.MoveY(-0.05);
+    cout << "move backward" << endl;
   }
   if(keyStatus[(int)('a')])
   {
@@ -439,38 +397,9 @@ void updatePlayer(GLdouble timeDiff) {
   }
   if(keyStatus[(int)('u')])
   {
-    if (p.getMovingZAxis()) {
-      //cout << "esta movendo" << endl;
-    } else {
-      if (p.getSubmerginStatus() == 1) {
-        animation_submerge_time = glutGet(GLUT_ELAPSED_TIME);
-        p.setMovingZAxis(true);
-        //cout << "comecando a mover em " << animation_submerge_time << endl;
-      } else if (p.getSubmerginStatus() == -1) {
-        bool is_under_enemy = false;
-        for (Submarine::submarine e : enemies) {
-          if (collisionDetection(e.getPosX(),
-                                 e.getPosY(),
-                                 e.getRadius(),
-                                 p.getPosX(),
-                                 p.getPosY(),
-                                 p.getMaxRadius())) {
-            is_under_enemy = true;
-          }
-        }
-        if (!is_under_enemy) {
-          animation_submerge_time = glutGet(GLUT_ELAPSED_TIME);
-          p.setMovingZAxis(true);
-        }
-      }
-    }
+    cout << "submerge" << endl;
   }
   // handling idle moves and collision
-
-  if(p.getMovingZAxis()) {
-    p.submerge(glutGet(GLUT_ELAPSED_TIME) - animation_submerge_time);
-  }
-
   p.updateHeli(timeDiff);
 }
 
@@ -507,29 +436,6 @@ void updateEnemies(GLdouble timeDiff) {
       }
       enmy->RotateTethaPaddle(factor * paddle_inc);
     }
-    if (rand() % 100+1 > 5) {
-      if (canMove(enmy->getVel()*timeDiff, *enmy) == false) {
-        if (enmy->getTicks() % 100 == 0) {
-          if (rand() % 1000+1 > 990) {
-            enmy->setVel(-1*enmy->getVel());  
-          }
-        }
-        enmy->Move(enmy->getVel()*timeDiff);
-      } else {
-        enmy->setVel(-1*enmy->getVel());
-      }
-    }
-    /* GLfloat paddle_inc = (float)(rand() % 100+1)/1000;
-    GLfloat factor;
-    if (rand()%2 == 0) {
-      factor = 1.0;
-    } else {
-      factor = -1.0;
-    }
-    //std::cout << factor << std::endl;
-    enmy->RotateTethaPaddle(factor * paddle_inc); */
-
-    
     enmy->setTicks(enmy->getTicks() + timeDiff);
     if (enmy->getTicks() >= 1000) {
       enmy->setTicks(0);
@@ -543,11 +449,13 @@ void updateEnemies(GLdouble timeDiff) {
         e_torpedos.push_back(Torpedo(px, py, tetha, r, -1, 0.0, 0.0));
       }
     }
-
     enmy->updateHeli(timeDiff);
   }
 }
 
+void updateTorpedos(GLdouble timediff) {
+  return;
+}
 
 void idle(void)
 {
@@ -637,6 +545,9 @@ int main(int argc, char ** argv) {
 
   tower_number = 0;
 
+  double world_pos_x;
+  double world_pos_y;
+
 	while (tmp_xml != nullptr) {
 	  color = tmp_xml->Attribute("fill");
     double cx, cy, r;
@@ -648,57 +559,65 @@ int main(int argc, char ** argv) {
 
     Submarine::submarine new_enmy;
 		switch (str2int(color)) {
-			case str2int("blue"):
-				// azul em rgb: 0, 0, 1
-				rgb[0] = 0.0;
-				rgb[1] = 0.0;
-				rgb[2] = 1.0;
-        world.setColor(rgb);
-        world.setPosX(cx);
-        world.setPosY(cy);
-        world.setRadius(r);
-        world.setId(id);
-				break;
-			case str2int("red"):
-				// red em rgb: 1, 0, 0
-        // enemies.push_back(Submarine::submarine());
-        // enmy = enemies.end();
-        new_enmy.setR(1.0);
-        new_enmy.setG(0.0);
-        new_enmy.setB(0.0);
-        new_enmy.setPosX(cx);
-        new_enmy.setPosY(2*world.getPosY() - cy);
-        new_enmy.setPosZ(0.0);
-        new_enmy.setId(id);
-        new_enmy.setRadius(r);
-        new_enmy.setMaxRadius(r);
-        new_enmy.setSubmerginStatus(1);
-        new_enmy.setVel(enemy_vel);
-        new_enmy.setVelTiro(enemy_vel_tiro);
-				rgb[0] = 1.0;
-				rgb[1] = 0.0;
-				rgb[2] = 0.0;
-        cy = 2*world.getPosY() - cy;
-        enemies.push_back(new_enmy);
-        //enemies.push_back(Enemy(id, rgb, cx, cy, 0.0, r));
-				break;
-			case str2int("green"):
-				// verde em rgb: 0, 0, 1
-				rgb[0] = 0.0;
-				rgb[1] = 1.0;
-				rgb[2] = 0.0;
-        cy = 2*world.getPosY() - cy;
-        p.setPosX(cx);
-        p.setPosY(cy);
-        p.setRadius(r);
-        p.setMaxRadius(r);
-        //p.setColor(rgb);
-        p.setR(rgb[0]);
-        p.setG(rgb[1]);
-        p.setB(rgb[2]);
-        p.setId(id);
-        mouse_info.setRadius(r);
-				break;
+			    case str2int("blue"):
+      // azul em rgb: 0, 0, 1
+      rgb[0] = 0.0;
+      rgb[1] = 0.0;
+      rgb[2] = 1.0;
+      world_pos_x = cx;
+      world_pos_y = cy;
+      world.setColor(rgb);
+      // world.setPosX(cx);
+      // world.setPosY(cy);
+      world.setPosX(0);
+      world.setPosY(0);
+      world.setRadius(r);
+      world.setId(id);
+      break;
+    case str2int("red"):
+      // red em rgb: 1, 0, 0
+      // enemies.push_back(Submarine::submarine());
+      // enmy = enemies.end();
+      new_enmy.setR(1.0);
+      new_enmy.setG(0.0);
+      new_enmy.setB(0.0);
+      new_enmy.setPosX(cx-world_pos_x);
+      // new_enmy.setPosY(2 * world.getPosY() - cy);
+      new_enmy.setPosY(-1*(cy-world_pos_y));
+      new_enmy.setPosZ(2*r);
+      new_enmy.setId(id);
+      new_enmy.setRadius(r);
+      new_enmy.setMaxRadius(r);
+      new_enmy.setSubmerginStatus(1);
+      new_enmy.setVel(enemy_vel);
+      new_enmy.setVelTiro(enemy_vel_tiro);
+      rgb[0] = 1.0;
+      rgb[1] = 0.0;
+      rgb[2] = 0.0;
+      enemies.push_back(new_enmy);
+      //enemies.push_back(Enemy(id, rgb, cx, cy, 0.0, r));
+      break;
+    case str2int("green"):
+      // verde em rgb: 0, 0, 1
+      rgb[0] = 0.0;
+      rgb[1] = 1.0;
+      rgb[2] = 0.0;
+      // cy = 2 * world.getPosY() - cy;
+      cy = -(cy-world_pos_y);
+      p.setPosX(cx - world_pos_x);
+      p.setPosY(cy);
+      p.setPosZ(r*4);
+      p.setRadius(r);
+      p.setMaxRadius(r);
+      p.setMaxHeight(r*4);
+      p.setMinHeight(r/2);
+      //p.setColor(rgb);
+      p.setR(rgb[0]);
+      p.setG(rgb[1]);
+      p.setB(rgb[2]);
+      p.setId(id);
+      mouse_info.setRadius(r);
+      break;
 			case str2int("black"):
 				// preto em rgb: 0, 0, 0
         tower_number++;
@@ -706,17 +625,16 @@ int main(int argc, char ** argv) {
 				rgb[1] = 0.0;
 				rgb[2] = 0.0;
         cy = 2*world.getPosY() - cy;
-        islands.push_back(Island(id, rgb, cx, cy, 0.0, r, r*(tower_size/100)));
+        islands.push_back(Island(id, rgb, cx, cy, 0.0, r, r*(tower_size/100), p.getMaxRadius()*4));
 				break;
 			default:
 				break;
 		}
 		tmp_xml = tmp_xml->NextSiblingElement("circle");
 	}
-  int tamanhoDaJanela = ceil(world.getRadius()*2);
   glutInit(&argc, argv);
-  glutInitDisplayMode (GLUT_DOUBLE | GLUT_RGB);
-  glutInitWindowSize (tamanhoDaJanela, tamanhoDaJanela);
+  glutInitDisplayMode (GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
+  glutInitWindowSize(larguraDaJanela, alturaDaJanela);
   glutInitWindowPosition (100, 100);
   glutCreateWindow ("trabalhocg");
   init ();

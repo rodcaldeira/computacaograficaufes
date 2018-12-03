@@ -6,6 +6,9 @@
  */
 
 #include "submarine.h"
+#include <GL/glut.h>
+#include <GL/glu.h>
+#include <GL/gl.h>
 #include <math.h>
 #include <iostream>
 
@@ -15,6 +18,7 @@ namespace Submarine {
 submarine::submarine() {
 	setPosX(0.0);
 	setPosY(0.0);
+	setPosZ(1.0);
 	setRadius(40.0);
 	setTethaCenter(90.0);
 	setTethaHeli(0.0);
@@ -241,48 +245,63 @@ void submarine::RotateTethaHeli(GLfloat ang) {
 
 void submarine::DesenhaSubmarine(GLfloat x, GLfloat y, GLfloat radius, GLfloat cR,
 		GLfloat cG, GLfloat cB) {
-
+	GLfloat materialEmisison[] = {0.0, 0.0, 0.0, 1.0};
+	GLfloat materialColor[] = {0.0, 0.0, 1.0, 1.0};
+	//GLfloat materialColorAMB[] = {1.0, 1.0, 0.0, 1.0};
+	GLfloat mat_specular[] = {1.0, 1.0, 1.0, 1.0};
+	GLfloat mat_shininess[] = { 128 };
+	glMaterialfv(GL_FRONT, GL_EMISSION, materialEmisison);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, materialColor);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, materialColor);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
+	glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
 	glColor3f(cR, cG, cB);
 	glPushMatrix();
-		glTranslatef(x, y, 0.0);
+		glTranslatef(x, y, pos_z);
 		glRotatef(tetha_center * (180 / M_PI), 0.0, 0.0, 1.0);
 
 		//DesenhaCircle(0.0, 0.0, radius, radius, 0.8, 0.8, 0.8, 360); // circle for collision
-		DesenhaCircle(0.0, 0.0, radius, radius / 3, cR, cG, cB, 360); // ellipse of submarine
 		glPushMatrix();
-			glTranslatef(0.0, -radius / 3, 0.0);
-			DesenhaRect(center, radius / 3, radius / 5, 0.0, 0.0, cB*0.5); // black side1
+			glScalef(1.0, 0.3, 0.3);
+			glutSolidSphere(radius, 20, 10);
+			
 		glPopMatrix();
-		glPushMatrix();
-			glTranslatef(0.0, radius/3, 0.0);
-			DesenhaRect(center, radius / 3, radius / 5, 0.0, 0.0, cB*0.5); // black side2
-		glPopMatrix();
-		glPushMatrix();
-			glTranslatef(radius - radius / 5, 0.0, 0.0);
-			DesenhaCircle(0.0, 0.0, radius/12, radius/12, 0.0, 0.0, cB*0.5, 360); // underwater torpedo
-		glPopMatrix();
-		glPushMatrix();
-			glTranslatef(0.0, - radius / 6, 0.0);
-			DesenhaCircle(0.0, 0.0, radius/12, radius/12, 1.0, 0.0, cB, 360); // overwater torpedo
-		glPopMatrix();
+		
 		glPushMatrix();
 			glTranslatef(-radius, 0.0, 0.0);
 			glRotatef(tetha_paddle * (180 / M_PI), 0, 0, 1);
-			DesenhaRect(right_center, radius / 4, radius / 10, 0.0, 0.0, cB*0.5);
-		glPopMatrix();
-		glPushMatrix();
-			glTranslatef(-radius, 0.0, 0.0);
 			glRotatef(90, 0, 0, 1);
+			glScalef(0.02, 1.0, 0.3);
+			glPushMatrix();
+				
+				glTranslatef(0, radius/3, 0);
+				glutSolidCube(radius/2);
+			glPopMatrix();
+		glPopMatrix();
+
+		glPushMatrix();
+			
+			glTranslatef(-radius, 0.0, 0.0);
+			glRotatef(-90, 0, 0, 1);
 			glRotatef(tetha_heli, 0, 1, 0); // rotation moving
 			glRotatef(45, 1, 0, 0); // rotation for further usage (3d inclination of helipad)
-			DesenhaTriangle(0.0, 0.0, radius/2, 1.0, 1.0, cB*0.5);
+			glScalef(1.0, 0.05, 0.4);
+			glPushMatrix();
+				glTranslatef(radius/5, 0.0, 0.0);
+				glutSolidCube(radius/3);
+			glPopMatrix();
 		glPopMatrix();
 		glPushMatrix();
+			
 			glTranslatef(-radius, 0.0, 0.0);
-			glRotatef(90, 0, 0, 1);
+			glRotatef(-90, 0, 0, 1);
 			glRotatef(tetha_heli, 0, 1, 0); // rotation for moving
-			glRotatef(45, 1, 0, 0); // rotation for further usage (3d inclination of helipad)
-			DesenhaTriangle(0.0, 0.0, -radius/2, 1.0, 1.0, cB*0.5);
+			glRotatef(-45, 1, 0, 0); // rotation for further usage (3d inclination of helipad)
+			glScalef(1.0, 0.05, 0.4);
+			glPushMatrix();
+				glTranslatef(-radius/5, 0.0, 0.0);
+				glutSolidCube(radius/3);
+			glPopMatrix();
 		glPopMatrix();
 	glPopMatrix();
 }
@@ -432,33 +451,57 @@ void submarine::setSubmerginStatus(GLint i) {
 	submergin_status = i;
 }
 
+GLfloat submarine::getMinHeight() {
+	return min_height;
+}
+void submarine::setMinHeight(GLfloat h) {
+	min_height = h;
+}
+GLfloat submarine::getMaxHeight() {
+	return max_height;
+}
+void submarine::setMaxHeight(GLfloat h) {
+	max_height = h;
+}
+
+void submarine::MoveZ(GLfloat dz) {
+	pos_z += dz;
+}
+
 void submarine::submerge(int milisec) {
-	if (!getMovingZAxis()) {
-		return;
-	} else {
-		double sec = (float) milisec / 1000;
-		GLfloat maxRadius = getMaxRadius();
-		GLfloat a = maxRadius / 2;
-		if (submergin_status == 1) { // on water level
-			setRadius((-1)*a*sec + maxRadius);
-			setR(0.0);
-			setG(1.0);
-			setB(1.0);
-			if (getRadius() <= getMaxRadius()/2) {
-				setSubmerginStatus(-1);
-				setMovingZAxis(false);
-			}
-		} else if (submergin_status == -1) {
-			setRadius(a*sec + maxRadius/2);
-      if (getRadius() >= getMaxRadius()) {
-				setR(0.0);
-				setG(1.0);
-				setB(0.0);
-				setSubmerginStatus(1);
-				setMovingZAxis(false);
-			}
-		}
+	if (milisec == 1) {
+		if (pos_z >= max_height) pos_z = 80.0f;
+	} else if (milisec == -1) {
+		if (pos_z <= min_height) pos_z = 10.0f;
 	}
+	MoveZ((vel/5)*milisec);
+	
+	// if (!getMovingZAxis()) {
+	// 	return;
+	// } else {
+	// 	double sec = (float) milisec / 1000;
+	// 	GLfloat maxRadius = getMaxRadius();
+	// 	GLfloat a = maxRadius / 2;
+	// 	if (submergin_status == 1) { // on water level
+	// 		setRadius((-1)*a*sec + maxRadius);
+	// 		setR(0.0);
+	// 		setG(1.0);
+	// 		setB(1.0);
+	// 		if (getRadius() <= getMaxRadius()/2) {
+	// 			setSubmerginStatus(-1);
+	// 			setMovingZAxis(false);
+	// 		}
+	// 	} else if (submergin_status == -1) {
+	// 		setRadius(a*sec + maxRadius/2);
+    //   if (getRadius() >= getMaxRadius()) {
+	// 			setR(0.0);
+	// 			setG(1.0);
+	// 			setB(0.0);
+	// 			setSubmerginStatus(1);
+	// 			setMovingZAxis(false);
+	// 		}
+	// 	}
+	// }
 
 }
 

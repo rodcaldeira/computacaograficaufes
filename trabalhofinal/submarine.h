@@ -37,6 +37,8 @@ class submarine
 	GLfloat pos_z;
 	GLfloat radius;
 	GLfloat max_radius;
+	GLfloat max_height;
+	GLfloat min_height;
 	GLfloat direction_sub_x;
 	GLfloat direction_sub_y;
 	GLfloat direction_steering_x;
@@ -112,11 +114,16 @@ class submarine
 	void Move(GLdouble d);
 	void MoveX(GLfloat dx);
 	void MoveY(GLfloat dy);
+	void MoveZ(GLfloat dz);
 	void RotateTethaCenter(GLfloat ang);
 	void RotateTethaHeli(GLfloat ang);
 	void RotateTethaPaddle(GLfloat ang);
 
 	void updateHeli(GLdouble timeDiff);
+	GLfloat getMinHeight();
+	void setMinHeight(GLfloat h);
+	GLfloat getMaxHeight();
+	void setMaxHeight(GLfloat h);
 	void submerge(int milisec);
 	void incTicks();
 	GLint getTicks();
@@ -125,6 +132,11 @@ class submarine
 	void Desenha()
 	{
 		DesenhaSubmarine(pos_x, pos_y, radius, R, G, B);
+	}
+
+	void Desenha2D(GLfloat x, GLfloat y)
+	{
+		DesenhaCircle(x, y, max_radius/5, max_radius/5, R, G, B, 360);
 	}
 };
 
