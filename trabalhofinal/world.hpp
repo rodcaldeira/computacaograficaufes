@@ -93,7 +93,7 @@ class Sea {
 private:
   void DesenhaCircle(GLfloat x, GLfloat y, GLfloat rad, GLfloat R, GLfloat G, GLfloat B);
   void DesenhaSea(GLfloat x, GLfloat y, GLfloat pos_z, GLfloat radius, GLfloat R, GLfloat G, GLfloat B);//, GLfloat theta2, GLfloat theta3);
-  void DesenhaCylinder(GLfloat x, GLfloat y, GLfloat z, GLfloat rad, GLfloat h, GLfloat R, GLfloat G, GLfloat B);
+  void DesenhaCylinder(GLfloat x, GLfloat y, GLfloat z, GLfloat rad, GLfloat h, GLfloat R, GLfloat G, GLfloat B, GLuint texture);
 
 public:
   Sea() {
@@ -105,9 +105,9 @@ public:
     rgb[2] = 1.0;
   }
 
-  void Desenha() {
+  void Desenha(GLuint texture) {
     //DesenhaSea(pos_x, pos_y, pos_z, radius, rgb[0], rgb[1], rgb[2]);
-    DesenhaCylinder(pos_x, pos_y, pos_z, radius, height, 0.0, 0.0, 1.0);
+    DesenhaCylinder(pos_x, pos_y, pos_z, radius, height, 0.0, 0.0, 1.0, texture);
   }
 
   void MoveX(GLfloat dx);

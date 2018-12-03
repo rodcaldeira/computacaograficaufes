@@ -295,10 +295,10 @@ void submarine::RotateTethaHeli(GLfloat ang) {
 
 void submarine::DesenhaSubmarine(GLfloat x, GLfloat y, GLfloat radius, GLfloat cR,
 		GLfloat cG, GLfloat cB) {
-	GLfloat materialEmisison[] = {0.0, 0.0, 0.0, 1.0};
-	GLfloat materialColor[] = {0.0, 1.0, 0.0, 1.0};
+	GLfloat materialEmisison[] = {0.1, 0.1, 0.1, 1.0};
+	GLfloat materialColor[] = {cR, cG, cB, 1.0};
 	//GLfloat materialColorAMB[] = {1.0, 1.0, 0.0, 1.0};
-	GLfloat mat_specular[] = {1.0, 1.0, 1.0, 1.0};
+	GLfloat mat_specular[] = {0.2, 0.2, 0.2, 1.0};
 	GLfloat mat_shininess[] = { 128 };
 	glMaterialfv(GL_FRONT, GL_EMISSION, materialEmisison);
 	glMaterialfv(GL_FRONT, GL_AMBIENT, materialColor);
@@ -317,11 +317,12 @@ void submarine::DesenhaSubmarine(GLfloat x, GLfloat y, GLfloat radius, GLfloat c
 		glPopMatrix();
 
 		glPushMatrix();
-			glTranslatef(radius-radius/20, 0.0, 0.0);
+			glTranslatef(radius, 0.0, 0.0);
 			glColor3f(0.0, 0.0, 0.0);
 			glRotatef(90, 0.0, 1.0, 0.0);
 			glRotatef(tetha_canon, 0, 0, 1);
 			glRotatef(tetha_canon_z, 0, 1, 0);
+			std::cout << tetha_canon << std::endl;
 			GLUquadricObj *quadric=gluNewQuadric();
 			gluQuadricNormals(quadric, GLU_SMOOTH);
 			gluQuadricOrientation(quadric,GLU_OUTSIDE);

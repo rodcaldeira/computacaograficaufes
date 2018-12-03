@@ -31,6 +31,7 @@
 #include "torpedo.h"
 #include "cursor.h"
 #include "world.hpp"
+#include "imageloader.h"
 using namespace std;
 
 // variaveis
@@ -62,6 +63,7 @@ double mouseX;
 double mouseY;
 int right_button = 0;
 float camera_angle, camera_angle_z;
+GLuint textureSky;
 /*
 ref para funcao str2int
 https://stackoverflow.com/questions/16388510/evaluate-a-string-with-a-switch-in-c#answer-16388610
@@ -77,8 +79,45 @@ constexpr unsigned int str2int(const char* str, int h = 0)
 
 int camera = 3;
 
-void drawView() {
+GLuint LoadTextureRAW(const char * filename) {
 
+    GLuint texture;
+
+    Image* image = loadBMP(filename);
+
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    gluBuild2DMipmaps(GL_TEXTURE_2D,
+            GL_RGB,
+            image->width, image->height,
+            GL_RGB,
+            GL_UNSIGNED_BYTE,
+            image->pixels);
+
+    glTexImage2D(GL_TEXTURE_2D, //Always GL_TEXTURE_2D
+            0, //0 for now
+            GL_RGB, //Format OpenGL uses for image
+            image->width, image->height, //Width and height
+            0, //The border of the image
+            GL_RGB, //GL_RGB, because pixels are stored in RGB format
+            GL_UNSIGNED_BYTE, //GL_UNSIGNED_BYTE, because pixels are stored
+            //as unsigned numbers
+            image->pixels); //The actual pixel data
+
+    delete image;
+
+    return texture;
+}
+
+void drawView() {
+  return;
 }
 
 void drawCirc(GLfloat x, GLfloat y, GLfloat radius, GLfloat r, GLfloat g, GLfloat b) {
@@ -123,6 +162,7 @@ void drawMiniMap() {
   glEnable(GL_DEPTH_TEST);
 }
 
+
 float gradToRad(float v) {
   return v * M_PI / 180;
 }
@@ -139,6 +179,9 @@ void pickCam() {
   GLfloat upvx;
   GLfloat upvy;
   GLfloat upvz;
+
+  GLfloat tetha_canon_rad = gradToRad(p.getTethaCanon());
+  GLfloat tetha_canon_z_rad = gradToRad(p.getTethaCanonZ());
   switch(camera) {
     case 1: // first person
       eyex = p.getPosX();
@@ -149,27 +192,47 @@ void pickCam() {
       poiy = p.getPosY() + 10*p.getRadius()*sin(p.getTethaCenter());
       poiz = p.getPosZ();
 
-      upvx = 0.0;
-      upvy = 0.0;
-      upvz = 1.0;
+      upvx = 0.0f;
+      upvy = 0.0f;
+      upvz = 1.0f;
       break;
-    case 2:
-      gluLookAt(p.getPosX() - 3.5*p.getRadius()*cos(p.getTethaCenter()), p.getPosY() - sin(p.getTethaCenter())*3.5*p.getRadius(), p.getPosZ() + 2*p.getRadius(),
-            p.getPosX(), p.getPosY(), p.getPosZ(),
-            0, 0, 1);
+    case 2: // canon PoV
+      eyex = p.getPosX() + p.getMaxRadius()*cos(p.getTethaCenter());
+      eyey = p.getPosY() + p.getMaxRadius()*sin(p.getTethaCenter());// - sin(p.getTethaCenter())*3.5*p.getRadius(); 
+      //eyez = p.getPosZ() + p.getMaxRadius()/10;
+      eyez = 1.5*p.getPosZ();
+
+      // poix = world.getPosX();
+      // poiy = world.getPosY();
+      // poiz = world.getPosZ();
+      poix = eyex + p.getRadius()*cos(p.getTethaCenter() - tetha_canon_rad);
+      poiy = eyey + p.getRadius()*sin(p.getTethaCenter() - tetha_canon_rad);//p.getPosY() + 10*p.getMaxRadius()*sin(p.getTethaCanon()); 
+      poiz = p.getPosZ() + p.getRadius()*cos(tetha_canon_z_rad);
+      cout << p.getTethaCanon() << "º " << p.getTethaCanonZ() << "º - " << eyex << " " << eyey << " " << eyez << " " << poix << " " << poiy << " " << poiz << endl;
+      upvx = 0.0f;
+      upvy = 0.0f;
+      upvz = 1.0f;
       break;
     case 3: // third person
-      eyex = p.getPosX() - 2.5*p.getRadius()*cos(p.getTethaCenter() + gradToRad(camera_angle));
-      eyey = p.getPosY() - 2.5*p.getRadius()*sin(p.getTethaCenter() + gradToRad(camera_angle));
+
+      glPushMatrix();
+        glTranslatef(
+          p.getPosX() + p.getMaxRadius()*sin(p.getTethaCenter()) + p.getRadius()*sin(p.getTethaCenter() + tetha_canon_rad),
+          p.getPosY() + p.getMaxRadius()*cos(p.getTethaCenter()) - p.getRadius()*cos(p.getTethaCenter() + tetha_canon_rad),
+          p.getPosZ() + p.getMaxRadius()/10 + p.getRadius()*cos(tetha_canon_z_rad));
+        glutSolidSphere(30.0, 32, 10);
+      glPopMatrix();
+      eyex = p.getPosX() + 2.5*p.getRadius()*cos(p.getTethaCenter() + gradToRad(camera_angle));
+      eyey = p.getPosY() + 2.5*p.getRadius()*sin(p.getTethaCenter() + gradToRad(camera_angle));
       eyez = p.getPosZ() + 2*p.getRadius()*cos(gradToRad(camera_angle_z));
 
       poix = p.getPosX();
       poiy = p.getPosY();
       poiz = p.getPosZ();
 
-      upvx = 0.0;
-      upvy = 0.0;
-      upvz = 1.0;
+      upvx = 0.0f;
+      upvy = 0.0f;
+      upvz = 1.0f;
       break;
   }
   gluLookAt(eyex, eyey, eyez,
@@ -182,28 +245,30 @@ void display(void)
   /* Limpar todos os pixels  */
   glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  cout << p.getTethaCanon() << " " << p.getTethaCanonZ() << endl;
+  //cout << p.getTethaCanon() << " " << p.getTethaCanonZ() << endl;
 
   glViewport(0, 0, larguraDaJanela, alturaDaJanela);
   glLoadIdentity();
   pickCam();
   //gluLookAt(0.0, 0.0, 150.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
   //gluLookAt(world.getPosX(), world.getPosY(), 7*p.getMaxRadius(), p.getPosX(), p.getPosY(), p.getPosZ(), 0.0, 1.0, 0.0);
-  //glutWireTeapot(1);
-  world.Desenha();
+  glBindTexture(GL_TEXTURE_2D, textureSky);
+  world.Desenha(textureSky);
   p.Desenha();
   GLfloat light_position[] = {world.getPosX(), world.getPosY(), world.getRadius()*2, 1.0};
   glLightfv(GL_LIGHT0, GL_POSITION, light_position);
   /* Desenhar um polígono branco (retângulo) */
 
-  world.Desenha();
+  
+      
+    //drawSky();
   for (Island i : islands) i.Desenha();
   for (Torpedo t : torpedos) t.Desenha();
   for (Torpedo et : e_torpedos) et.Desenha(); 
   p.Desenha();
   for (Submarine::submarine e : enemies) e.Desenha();
   //  if (mouseStates[GLUT_RIGHT_BUTTON]) {
-  //    mouse_info.Desenha();
+  //    mouse_info.Desenha();r
   //  }
 
   //p.setPosX(p.getPosX()+(GLfloat)0.01);
@@ -286,6 +351,8 @@ void init (void)
   glEnable(GL_LIGHTING);
   glEnable(GL_LIGHT0);
   glEnable(GL_DEPTH_TEST);
+
+  textureSky = LoadTextureRAW("sky12.bmp");
   
 }
 
@@ -376,6 +443,15 @@ void keyPress(unsigned char key, int x, int y)
     case 'J':
       keyStatus[(int)('j')] = 1;
       break;
+    case '1':
+      camera = 1;
+      break;
+    case '2':
+      camera = 2;
+      break;
+    case '3':
+      camera = 3;
+      break;
     case 27 :
       exit(0);
   }
@@ -405,6 +481,8 @@ void mouse(int button, int state, int x, int y) {
     } else {
       mouseStates[button] = false;
       right_button = 0;
+      camera_angle = 0;
+      camera_angle_z = 0;
       torpedos.push_back(Torpedo(p.getPosX(), p.getPosY(), p.getTethaCenter(), p.getRadius()/12, 1, x, y));
     }
   }
@@ -421,6 +499,7 @@ void dragAndDrop(int x, int y) {
   float h2 = (float)alturaDaJanela/2;
   int tmp_x = x;
   int tmp_y = y;
+  
   if (tmp_x < w2) {
     if (tmp_x < 0) tmp_x = 0.0;
     perc = w2 - tmp_x;
@@ -439,24 +518,17 @@ void dragAndDrop(int x, int y) {
     perc = tmp_y - h2;
     p.setTethaCanonZ(30.0 * perc/h2);
   }
+  cout << p.getTethaCanon() << endl;
   x += dx;
   y += dy;
   
-  
-  // if (y > mouseY) {
-  //   p.MoveCanon(1.0);
-  // } else if (y < mouseY) {
-  //   p.MoveCanon(-1.0);
-  // }
-  mouseX = x;
-  mouseY = y;
+  mouseX = tmp_x;
+  mouseY = tmp_y;
   mouse_info.setPosX(x);
   mouse_info.setPosY(y);
-  // if (mouseStates[GLUT_RIGHT_BUTTON] == true) {
   if (right_button == 1) {
-    //cout << "a" << endl;
-    camera_angle = (mouseX * 180)/((float)larguraDaJanela/2);
-    camera_angle_z = (mouseY * 35)/((float)alturaDaJanela/2);
+    camera_angle = (mouseX * 180/w2);
+    camera_angle_z = (mouseY * 180/h2);
   }
   glutPostRedisplay();
 }
@@ -466,7 +538,7 @@ void updatePlayer(GLdouble timeDiff) {
   //Treat keyPress
   if(keyStatus[(int)('w')])
   {
-    cout << "move forward" << endl;
+    p.Move(dist);
   }
   if(keyStatus[(int)('d')])
   {
@@ -474,7 +546,7 @@ void updatePlayer(GLdouble timeDiff) {
   }
   if(keyStatus[(int)('s')])
   {
-    cout << "move backward" << endl;
+    p.Move(-dist);
   }
   if(keyStatus[(int)('a')])
   {

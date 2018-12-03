@@ -29,12 +29,27 @@ void Island::DesenhaIsland(GLfloat x, GLfloat y, GLfloat z,
 
 void Island::DesenhaCylinder(GLfloat x, GLfloat y, GLfloat z, GLfloat rad, GLfloat h, GLfloat R, GLfloat G, GLfloat B) {
   glPushMatrix();
+    GLfloat materialEmisison[] = {0.1, 0.1, 0.1, 1.0};
+    GLfloat materialColor[] = {0.0, 0.0, 0.0, 1.0};
+    GLfloat materialColorYellow[] = {1.0, 1.0, 0.0, 1.0};
+    //GLfloat materialColorAMB[] = {1.0, 1.0, 0.0, 1.0};
+    GLfloat mat_specular[] = {1.0, 1.0, 1.0, 1.0};
+    GLfloat mat_shininess[] = { 128 };
+    glMaterialfv(GL_FRONT, GL_EMISSION, materialEmisison);
+    glMaterialfv(GL_FRONT, GL_AMBIENT, materialColor);
+    glMaterialfv(GL_FRONT, GL_DIFFUSE, materialColor);
+    glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
+    glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
     glColor3f(0.0, 0.0, 0.0);
     GLUquadricObj *quadric=gluNewQuadric();
     gluQuadricNormals(quadric, GLU_SMOOTH);
     gluQuadricOrientation(quadric,GLU_OUTSIDE);
     gluCylinder(quadric, radius, radius, height, 32, 1);
+    glTranslatef(0.0, 0.0, height);
+    gluDisk(quadric, 0.0, radius, 32, 10);
     gluDeleteQuadric(quadric);
+    glMaterialfv(GL_FRONT, GL_AMBIENT, materialColorYellow);
+    glutSolidSphere(tower_perc, 32, 10);
   glPopMatrix();
 }
 
@@ -119,13 +134,48 @@ void Sea::DesenhaCircle(GLfloat x, GLfloat y, GLfloat rad, GLfloat R, GLfloat G,
   glEnd();
 }
 
-void Sea::DesenhaCylinder(GLfloat x, GLfloat y, GLfloat z, GLfloat rad, GLfloat h, GLfloat R, GLfloat G, GLfloat B) {
+void Sea::DesenhaCylinder(GLfloat x, GLfloat y, GLfloat z, GLfloat rad, GLfloat h, GLfloat R, GLfloat G, GLfloat B, GLuint texture) {
   glPushMatrix();
-    glColor3f(0.0, 0.0, 0.0);
+    GLfloat materialEmisison[] = {1.0, 1.0, 1.0, 1.0};
+    GLfloat materialColor[] = {0.0, 0.0, 0.0, 1.0};
+    GLfloat mat_color_blue_alpha[] = {0.0, 0.0, 1.0, 1.0};
+    //GLfloat materialColorAMB[] = {1.0, 1.0, 0.0, 1.0};
+    GLfloat mat_specular[] = {1.0, 1.0, 1.0, 1.0};
+    GLfloat mat_shininess[] = { 128 };
+    //glMaterialfv()
+    glMaterialfv(GL_BACK, GL_EMISSION, materialEmisison);
+    glMaterialfv(GL_BACK, GL_AMBIENT, materialColor);
+    glMaterialfv(GL_BACK, GL_DIFFUSE, materialColor);
+    glMaterialfv(GL_BACK, GL_SPECULAR, mat_specular);
+    glMaterialfv(GL_BACK, GL_SHININESS, mat_shininess);
+    glColor3f(0.0, 0.0, 1.0);
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, texture);
     GLUquadricObj *quadric=gluNewQuadric();
     gluQuadricNormals(quadric, GLU_SMOOTH);
-    gluQuadricOrientation(quadric,GLU_OUTSIDE);
+    gluQuadricOrientation(quadric,GLU_INSIDE);
     gluCylinder(quadric, radius, radius, height, 32, 1);
+    glDisable(GL_TEXTURE_2D);
+    //draw the midcap
+    gluQuadricOrientation(quadric,GLU_INSIDE);
+    gluDisk( quadric, 0.0, radius, 32, 1);
+    glTranslatef( 0,0,height/2 );
+
+
+    //draw the second cap
+    glMaterialfv(GL_FRONT, GL_EMISSION, materialEmisison);
+    glMaterialfv(GL_FRONT, GL_AMBIENT, mat_color_blue_alpha);
+    glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_color_blue_alpha);
+    glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
+    glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
+    gluQuadricOrientation(quadric,GLU_OUTSIDE);
+    glMaterialfv(GL_BACK, GL_AMBIENT, mat_color_blue_alpha );
+    gluDisk( quadric, 0.0, radius, 32, 1);
+    glPopMatrix();
+    
+    
+    //gluDisk(quadric, 0.0, radius, 32, 10);
+    
     gluDeleteQuadric(quadric);
   glPopMatrix();
 }
