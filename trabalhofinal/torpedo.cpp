@@ -96,6 +96,9 @@ void Torpedo::setPosZ(GLfloat z) {
 }
 
 void Torpedo::setTethaCenterZ(GLfloat a) {
+  while (a > 360) a-=360;
+  while (a < -360) a+=360;
+
   tetha_center_z = a;
 }
 
@@ -108,7 +111,11 @@ GLfloat Torpedo::getTethaCenter() {
 }
 
 void Torpedo::setTethaCenter(GLfloat a) {
+  while (a > 360) a-=360;
+  while (a < -360) a+=360;
+  
   tetha_center = a;
+  
 }
 
 GLfloat Torpedo::getRadius() {
@@ -177,7 +184,7 @@ void Torpedo::MoveY(GLfloat dy) {
 void Torpedo::MoveZ(GLfloat dz) {
   pos_z += dz;
 }
-
+   
 void Torpedo::shot(GLdouble d, GLfloat vel_torpedo) {
   if (type == 1) { // lancamento de projetil
     if (pos_z <= radius*12*4) {
@@ -185,13 +192,16 @@ void Torpedo::shot(GLdouble d, GLfloat vel_torpedo) {
     } else {
       MoveX(vel_torpedo*d*cos(tetha_center*M_PI/180));
       MoveY(vel_torpedo*d*sin(tetha_center*M_PI/180));
-      MoveZ(vel_torpedo*d*cos(tetha_center_z*M_PI/180));
+      MoveZ(vel_torpedo*vel_torpedo*vel_torpedo*d*cos(tetha_center_z));
+      std::cout << tetha_center << std::endl;
       GLfloat actual_dist = sqrt( pow(pos_x - target_x, 2) + pow(pos_y - target_y, 2) );
-      tetha_center_z += (actual_dist/dist_target)*180.0;
+      // std::cout << actual_dist/dist_target << std::endl;
+      tetha_center_z = (1-(actual_dist/dist_target))*180.0;
     }
   } else if (type == -1) { // retilinio
-    MoveX(vel_torpedo*d*cos(tetha_center*M_PI/180));
-    MoveY(vel_torpedo*d*sin(tetha_center*M_PI/180));
+    MoveX(vel_torpedo*d*cos((tetha_center)*M_PI/180));
+    MoveY(vel_torpedo*d*sin((tetha_center)*M_PI/180));
+    MoveZ(vel_torpedo*d*sin(tetha_center_z));
   }
 }
 
@@ -223,8 +233,8 @@ void Torpedo::Move(GLdouble d, GLfloat vel_torpedo) {
 
 void Torpedo::DesenhaTorpedo3d(GLfloat x, GLfloat y, GLfloat z, GLfloat radius, GLfloat cR, GLfloat cG, GLfloat cB) {
   glPushMatrix();
-    glLoadIdentity();
-    glTranslatef(x, y, z);
+    // glLoadIdentity();
+    glMatrixMode(GL_MODELVIEW);
     GLfloat materialEmisison[] = {1, 1, 1, 1.0};
     GLfloat materialColor[] = {1.0, 0.0, 0.0, 1.0};
     GLfloat materialColorYellow[] = {1.0, 1.0, 0.0, 1.0};
@@ -237,16 +247,24 @@ void Torpedo::DesenhaTorpedo3d(GLfloat x, GLfloat y, GLfloat z, GLfloat radius, 
     glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
     glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
     glColor3f(0.0, 0.0, 0.0);
-    glRotatef(tetha_center_z, 0, 1, 0);
+    glTranslatef(x, y, z);
+    if (type == -1) {
+      glRotatef(90, 1, 0, 0);
+      //glRotatef(tetha_center,0, 0, 1);
+      std::cout << tetha_center << std::endl;
+    }
     GLUquadricObj *quadric=gluNewQuadric();
     gluQuadricNormals(quadric, GLU_SMOOTH);
     gluQuadricOrientation(quadric,GLU_OUTSIDE);
+
+    glRotatef(tetha_center, 0, 0, 1);
+    glRotatef(tetha_center_z, 0, 1, 0);
     gluCylinder(quadric, radius, radius, radius*10, 32, 1);
     glTranslatef(0.0, 0.0, radius*10);
     gluDeleteQuadric(quadric);
     glMaterialfv(GL_FRONT, GL_AMBIENT, materialColor);
     glutSolidSphere(radius, 32, 10);
-  glPopMatrix();
+    glPopMatrix();
 }
 
 void Torpedo::DesenhaTorpedo(GLfloat x, GLfloat y, GLfloat radius, GLfloat cR,

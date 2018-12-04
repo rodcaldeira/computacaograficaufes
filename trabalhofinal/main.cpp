@@ -185,7 +185,7 @@ void drawMiniMap() {
       gluLookAt(world.getPosX(), world.getPosY(), 7*p.getMaxRadius(), world.getPosX(), world.getPosY(), 0.0, 0.0, 1.0, 0.0);
       
       // draw sea
-      drawCirc(world.getPosX(), world.getPosY(), world.getRadius()/8, 0.0, 0.0, 1.0);  
+      drawCirc(world.getPosX(), world.getPosY(), world.getRadius()*0.125, 0.0, 0.0, 1.0);  
       double f = (world.getPosX() + world.getRadius()/8)/(world.getPosX() + world.getRadius());
       // draw island
       for (Island i : islands) {
@@ -270,8 +270,8 @@ void pickCam() {
           p.getPosZ() + p.getMaxRadius()/10 + p.getRadius()*cos(tetha_canon_z_rad));
         glutSolidSphere(30.0, 32, 10);
       glPopMatrix();
-      eyex = p.getPosX() + 2.5*p.getRadius()*cos(p.getTethaCenter() + gradToRad(camera_angle));
-      eyey = p.getPosY() + 2.5*p.getRadius()*sin(p.getTethaCenter() + gradToRad(camera_angle));
+      eyex = p.getPosX() - 2.5*p.getRadius()*cos(p.getTethaCenter() + gradToRad(camera_angle));
+      eyey = p.getPosY() - 2.5*p.getRadius()*sin(p.getTethaCenter() + gradToRad(camera_angle));
       eyez = p.getPosZ() + 2*p.getRadius()*cos(gradToRad(camera_angle_z));
 
       poix = p.getPosX();
@@ -459,40 +459,68 @@ void keyPress(unsigned char key, int x, int y)
   glutPostRedisplay();
 }
 
+bool click_mini_map = false;
+
 void mouse(int button, int state, int x, int y) {
-  GLint dx = world.getPosX() - world.getRadius();
-  GLint dy = world.getPosY() - world.getRadius();
+  GLint dx = 0.0;//world.getPosX() - world.getRadius();
+  GLint dy = 0.0;//world.getPosY() - world.getRadius();
   y = glutGet(GLUT_WINDOW_HEIGHT) - y;
   x += dx;
   y += dy;
 
   if (button == GLUT_LEFT_BUTTON) { // para frente
     if (state == GLUT_DOWN) {
-      torpedos.push_back(Torpedo(p.getPosX(), p.getPosY(), p.getPosZ(), p.getTethaCenter()+p.getTethaCanon(), p.getTethaCanonZ(), p.getRadius()/12, p.getSubmerginStatus(), x, y));
+      //cout << p.getTethaCenter() << endl;
+      torpedos.push_back(Torpedo(p.getPosX(), p.getPosY()+p.getMaxRadius(), p.getPosZ(), p.getTethaCenter()*(180/M_PI)+p.getTethaCanon(), p.getTethaCanonZ(), p.getRadius()/12, -1, x, y));
     }
   }
-  // if (button == GLUT_RIGHT_BUTTON) { // para cima
-  //   if (state == GLUT_DOWN) {
-  //     mouse_info.setPosX(x);
-  //     mouse_info.setPosY(y);
-  //     mouseX = x;
-  //     mouseY = y;
-  //     mouseStates[button] = true;
-  //     right_button = 1;
-  //   } else {
-  //     mouseStates[button] = false;
-  //     right_button = 0;
-  //     camera_angle = 0;
-  //     camera_angle_z = 0;
-  //     torpedos.push_back(Torpedo(p.getPosX(), p.getPosY(), p.getPosZ(), p.getTethaCenter(), 0.0, p.getRadius()/12, 1, x, y));
-  //   }
-  // }
-
+  if (button == GLUT_RIGHT_BUTTON) { // para cima
+    if (state == GLUT_DOWN) {
+      mouse_info.setPosX(x);
+      mouse_info.setPosY(y);
+      if (x >= larguraDaJanela*0.75 && y <= alturaDaJanela*0.25) {
+        click_mini_map = true;
+      } else {
+        click_mini_map = false;
+      }
+      mouseX = x;
+      mouseY = y;
+      mouseStates[button] = true;
+      right_button = 1;
+    } else {
+      mouseStates[button] = false;
+      right_button = 0;
+      camera_angle = 0;
+      camera_angle_z = 0;
+      if (click_mini_map) {
+        GLint reverse_x;
+        GLint reverse_y;
+        GLfloat world_prop_radius = world.getRadius()*0.125;
+        reverse_x = (larguraDaJanela/8)-(larguraDaJanela - x);
+        reverse_y = y;
+        cout << reverse_x << endl;// " " << reverse_y << endl;
+        // if (reverse_x < larguraDaJanela/8) {
+        //   reverse_x *= -1;
+        // } else {
+        //   reverse_x -= larguraDaJanela/8;
+        // }
+        if (reverse_y < alturaDaJanela/8) {
+          reverse_y -= alturaDaJanela/8;
+        } else {
+          reverse_y *= -1;
+        }
+        reverse_x = reverse_x*4;
+        reverse_y = reverse_y*4;
+        cout << reverse_x << endl;//" " << reverse_y << endl;
+        torpedos.push_back(Torpedo(p.getPosX(), p.getPosY(), p.getPosZ(), p.getTethaCenter()*(180/M_PI), 0.0, p.getRadius()/12, 1, reverse_x, reverse_y));
+      }
+    }
+  }
 }
 
 void dragAndDrop(int x, int y) {
-  GLint dx = world.getPosX() - world.getRadius();
-  GLint dy = world.getPosY() - world.getRadius();
+  GLint dx = 0.0;//world.getPosX() - world.getRadius();
+  GLint dy = 0.0;//world.getPosY() - world.getRadius();
   y = glutGet(GLUT_WINDOW_HEIGHT) - y;
 
   float perc = 0.0;
@@ -501,35 +529,37 @@ void dragAndDrop(int x, int y) {
   int tmp_x = x;
   int tmp_y = y;
   
-  if (tmp_x < w2) {
-    if (tmp_x < 0) tmp_x = 0.0;
-    perc = w2 - tmp_x;
-    p.setTethaCanon(-30.0 * perc/w2);
-  } else {
-    if (tmp_x > larguraDaJanela) tmp_x = larguraDaJanela;
-    perc = tmp_x - w2;
-    p.setTethaCanon(30.0 * perc/w2);
-  }
-  if (tmp_y < h2) {
-    if (tmp_y < 0) tmp_y = 0.0;
-    perc = h2 - tmp_y;
-    p.setTethaCanonZ(-30.0 * perc/h2);
-  } else {
-    if (tmp_y > alturaDaJanela) tmp_y = alturaDaJanela;
-    perc = tmp_y - h2;
-    p.setTethaCanonZ(30.0 * perc/h2);
-  }
+  // if (tmp_x < w2) {
+  //   if (tmp_x < 0) tmp_x = 0.0;
+  //   perc = w2 - tmp_x;
+  //   p.setTethaCanon(-30.0 * perc/w2);
+  // } else {
+  //   if (tmp_x > larguraDaJanela) tmp_x = larguraDaJanela;
+  //   perc = tmp_x - w2;
+  //   p.setTethaCanon(30.0 * perc/w2);
+  // }
+  // if (tmp_y < h2) {
+  //   if (tmp_y < 0) tmp_y = 0.0;
+  //   perc = h2 - tmp_y;
+  //   p.setTethaCanonZ(-30.0 * perc/h2);
+  // } else {
+  //   if (tmp_y > alturaDaJanela) tmp_y = alturaDaJanela;
+  //   perc = tmp_y - h2;
+  //   p.setTethaCanonZ(30.0 * perc/h2);
+  // }
   //cout << p.getTethaCanon() << endl;
   x += dx;
   y += dy;
-  
+  // cout << x << " " << y << endl;
   mouseX = tmp_x;
   mouseY = tmp_y;
   mouse_info.setPosX(x);
   mouse_info.setPosY(y);
   if (right_button == 1) {
-    camera_angle = (mouseX * 180/w2);
-    camera_angle_z = (mouseY * 180/h2);
+    if (!click_mini_map) {
+      camera_angle = (mouseX * 180/w2);
+      camera_angle_z = (mouseY * 180/h2);
+    }
   }
   glutPostRedisplay();
 }
@@ -537,32 +567,24 @@ void dragAndDrop(int x, int y) {
 
 GLfloat distanciaGeral(GLfloat x, GLfloat y, GLfloat z, GLfloat xo, GLfloat yo, GLfloat zo ){
   int dist= 0;
-
   dist = sqrt((x-xo)*(x-xo) + (y-yo)*(y-yo)+ (z-zo)*(z-zo));
-
   return dist;
-
 }
 GLfloat colisaoPlayerIlha=0;
 
 
 GLfloat colisaoHeroiIlhas(GLfloat xsub, GLfloat ysub, GLfloat zsub){
-
   for(Island i : islands){
-
-
     if(distanciaGeral(xsub,ysub,0, i.getPosX(), i.getPosY(), 0) < p.getMaxRadius()+ i.getRadius()){
       colisaoPlayerIlha ++;
     }
-
   }
   return colisaoPlayerIlha;
 }
 
-
 GLfloat colisaoPlayerSub=0;
-GLfloat colisaoHeroiInimigos(GLfloat xsub, GLfloat ysub, GLfloat zsub){
 
+GLfloat colisaoHeroiInimigos(GLfloat xsub, GLfloat ysub, GLfloat zsub){
   for(Submarine::submarine e : enemies){
 
 
@@ -575,6 +597,7 @@ GLfloat colisaoHeroiInimigos(GLfloat xsub, GLfloat ysub, GLfloat zsub){
 }
 
 GLfloat colisaoLimite=0;
+
 GLfloat colisaoHeroiLimite(GLfloat xsub, GLfloat ysub, GLfloat zsub){
     if(distanciaGeral(xsub,ysub,0, 0 , 0, 0) >  world.getRadius() - p.getMaxRadius()){
       colisaoLimite ++;
@@ -591,13 +614,15 @@ void updatePlayer(GLdouble timeDiff) {
     //cout << colisaoPlayerIlha << endl;
     p.updateHeli(80);
     p.Move(dist);
-    if((colisaoHeroiIlhas(p.getPosX(),p.getPosY(),p.getPosZ())>0) || (colisaoHeroiLimite(p.getPosX(),p.getPosY(),p.getPosZ())>0) || (colisaoHeroiInimigos(p.getPosX(),p.getPosY(),p.getPosZ()))>0){
+    if((colisaoHeroiIlhas(p.getPosX(),p.getPosY(),p.getPosZ())>0) || 
+       (colisaoHeroiLimite(p.getPosX(),p.getPosY(),p.getPosZ())>0) || 
+       (colisaoHeroiInimigos(p.getPosX(),p.getPosY(),p.getPosZ()))>0) {
       p.Move(-dist);
       colisaoPlayerIlha = 0;
       colisaoLimite=0;
       colisaoPlayerSub=0;
     }
-    }
+  }
   if(keyStatus[(int)('d')])
   {
     p.RotateTethaPaddle(+0.05*timeDiff);
@@ -671,6 +696,81 @@ void updatePlayer(GLdouble timeDiff) {
 //   p.updateHeli(timeDiff);
 // }
 
+
+bool collisionDetection(GLfloat x1, GLfloat y1, GLfloat r1, GLfloat x2, GLfloat y2, GLfloat r2) {
+  if ( sqrt(pow((x1-x2),2) + pow((y1-y2),2)) < r1+r2 ) return true;
+  return false;
+}
+
+bool canMove(GLfloat d, const Submarine::submarine& s) {
+  GLfloat r;
+  GLfloat move_delta;
+  GLfloat cx, cy, c_angle, s_angle;
+  if (fabs(s.getTethaPaddle()) < 0.02) {
+    cx = s.getPosX() + d*cos(s.getTethaCenter());
+    cy = s.getPosY() + d*sin(s.getTethaCenter());
+  } else {
+    r = s.getRadius()/tan(-s.getTethaPaddle());
+    move_delta = -d/r;
+
+    c_angle = -M_PI_2 + s.getTethaCenter();
+    s_angle = M_PI_2 + s.getTethaCenter() + move_delta;
+
+    cx = s.getPosX() + r*(cos(c_angle));
+    cy = s.getPosY() + r*(sin(c_angle));
+
+    cx += r*cos(s_angle);
+    cy += r*sin(s_angle);
+  }
+  bool coll = false;
+  // verify collision with island
+  for (Island i : islands) {
+    if (collisionDetection(i.getPosX(),
+                           i.getPosY(),
+                           i.getRadius(),
+                           cx,
+                           cy,
+                           s.getMaxRadius())) {
+                             /* std::cout << "collision with island" << std::endl; */
+       coll = true;
+     }
+  }
+
+  // verify collision with enemies
+  
+  GLint id = s.getId();
+  for (Submarine::submarine e : enemies) {
+    if ((id != e.getId()) && (s.getSubmerginStatus() == e.getSubmerginStatus()) && collisionDetection(e.getPosX(),
+                            e.getPosY(),
+                            e.getRadius(),
+                            cx,
+                            cy,
+                            s.getMaxRadius())) {
+                              /* std::cout << "collision with submarine" << std::endl; */
+        coll = true;
+      }
+  }
+
+  if (id != p.getId()) {
+    if ((s.getSubmerginStatus() == p.getSubmerginStatus()) && collisionDetection(p.getPosX(),
+                            p.getPosY(),
+                            p.getRadius(),
+                            cx,
+                            cy,
+                            s.getMaxRadius())) {
+                              /* std::cout << "collision with submarine" << std::endl; */
+        coll = true;
+      }
+  }
+  
+  // verify if try to leave the world
+  if (sqrt(pow((cx-world.getPosX()),2) + pow((cy-world.getPosY()),2)) >= world.getRadius() - s.getMaxRadius()) {
+    coll = true;
+  }
+  return coll;
+}
+
+
 void updateEnemies(GLdouble timeDiff) {
   del_enemy = enemies.begin();
   enmy = enemies.begin();
@@ -685,12 +785,12 @@ void updateEnemies(GLdouble timeDiff) {
   }
   for (enmy = enemies.begin(); enmy != enemies.end(); ++enmy) {
 
-    if (enmy->getSubmerginStatus() == 1) {
-      animation_submerge_time = glutGet(GLUT_ELAPSED_TIME);
-      enmy->setSubmerginStatus(-1);
-      enmy->setMovingZAxis(true);
-      enmy->submerge(glutGet(GLUT_ELAPSED_TIME) - animation_submerge_time);
-    }
+    // if (enmy->getSubmerginStatus() == 1) {
+    //   animation_submerge_time = glutGet(GLUT_ELAPSED_TIME);
+    //   enmy->setSubmerginStatus(-1);
+    //   enmy->setMovingZAxis(true);
+    //   enmy->submerge(glutGet(GLUT_ELAPSED_TIME) - animation_submerge_time);
+    // }
 
     GLfloat paddle_inc;
     GLfloat factor;
@@ -704,6 +804,21 @@ void updateEnemies(GLdouble timeDiff) {
       }
       enmy->RotateTethaPaddle(factor * paddle_inc);
     }
+
+    if (rand() % 100+1 > 5) {
+      if (canMove(enmy->getVel()*timeDiff, *enmy) == false) {
+        if (enmy->getTicks() % 100 == 0) {
+          if (rand() % 1000+1 > 990) {
+            enmy->submerge(timeDiff);
+            enmy->setVel(-1*enmy->getVel());  
+          }
+        }
+        enmy->Move(enmy->getVel()*timeDiff);
+      } else {
+        enmy->setVel(-1*enmy->getVel());
+      }
+    }
+
     enmy->setTicks(enmy->getTicks() + timeDiff);
     if (enmy->getTicks() >= 1000) {
       enmy->setTicks(0);
@@ -715,23 +830,120 @@ void updateEnemies(GLdouble timeDiff) {
         GLfloat tetha = enmy->getTethaCenter();
         GLfloat r = enmy->getRadius()/10;
       
-        e_torpedos.push_back(Torpedo(px, py, pz, tetha, 0.0, r, -1, 0.0, 0.0));
+        // e_torpedos.push_back(Torpedo(px, py, pz, tetha, 0.0, r, -1, 0.0, 0.0));
       }
     }
     enmy->updateHeli(timeDiff);
   }
 }
 
+
 void updateTorpedos(GLdouble timediff) {
   for (tps = torpedos.begin(); tps != torpedos.end(); ++tps) {
+    GLfloat t_pos_x = tps->getPosX();
+    GLfloat t_pos_y = tps->getPosY();
+    GLfloat t_pos_z = tps->getPosZ();
+    GLfloat t_radius = tps->getRadius();
     tps->shot(timediff, p.getVelTiro());
-    if (sqrt(pow((tps->getPosX()-world.getPosX()),2) + pow((tps->getPosY()-world.getPosY()),2)) >= world.getRadius() - tps->getRadius()) {
+
+    if (sqrt(t_pos_x*t_pos_x + t_pos_y*t_pos_y) > world.getRadius()) {
+      // cout << "saiu do mundo" << endl;
       tps->setToDelete(true);
     }
-    cout << tps->getPosX() << " " << tps->getPosY() << endl;
+
+    if (tps->getType() == -1) { //retilinio
+      for (Island i : islands) {
+        if (sqrt(pow(i.getPosX()-t_pos_x,2) + pow(i.getPosY() - t_pos_y,2)) < i.getRadius()) {
+          tps->setToDelete(true);
+        }
+      }
+      for (enmy = enemies.begin(); enmy != enemies.end(); ++enmy) {
+        if (sqrt(pow(enmy->getPosX() - t_pos_x,2) + 
+                 pow(enmy->getPosY() - t_pos_y,2) +
+                 pow(enmy->getPosZ() - t_pos_z,2)) < enmy->getRadius()) {
+          tps->setToDelete(true);
+          enmy->setToDelete(true);
+        }
+      }
+    } else {
+      GLfloat px = tps->getPosX();
+      GLfloat py = tps->getPosY();
+      GLfloat tx = tps->getTargetX();
+      GLfloat ty = tps->getTargetY();
+      GLfloat r_mouse = mouse_info.getRadius(); // se o target está proximo do local + error
+      if (fabs(tx - px) <= 5 && fabs(ty - py) <= 5) {
+        for (isl = islands.begin(); isl != islands.end(); ++isl) {
+        // verificar se
+        // o local do torpedo está proximo ao centro da ilha (com raio de porcentagem)
+          if ((isl->getAlive() == true) && 
+              collisionDetection(px, py, r_mouse, isl->getPosX(), isl->getPosY(), isl->getRadius()*(isl->getTowerPerc()/100))) {
+            isl->setAlive(false);
+            tower_number--;
+          }
+        } 
+      }
+    }
+    
+
+    // cout << tps->getPosX() << " " << tps->getPosY() << " " << tps->getPosZ() << endl;
   }
-  cout << torpedos.size() << endl;
-  for (Torpedo tps : e_torpedos) tps.shot(timediff, enemy_vel_tiro);
+  del_tps = torpedos.begin();
+  tps = torpedos.begin();
+  while (tps != torpedos.end()) {
+    if (tps->getToDelete()) {
+      del_tps = tps;
+      tps++;
+      torpedos.erase(del_tps);
+
+    } else {
+      tps++;
+    }
+  }
+  // cout << torpedos.size() << endl;
+  for (tps = e_torpedos.begin(); tps != e_torpedos.end(); ++tps) {
+    GLfloat t_pos_x = tps->getPosX();
+    GLfloat t_pos_y = tps->getPosY();
+    GLfloat t_pos_z = tps->getPosZ();
+    GLfloat t_radius = tps->getRadius();
+    tps->shot(timediff, p.getVelTiro());
+
+    if (sqrt(t_pos_x*t_pos_x + t_pos_y*t_pos_y) > world.getRadius()) {
+      cout << "saiu do mundo" << endl;
+      tps->setToDelete(true);
+    }
+
+    if (tps->getType() == -1) { //retilinio
+      for (Island i : islands) {
+        if (sqrt(pow(i.getPosX()-t_pos_x,2) + pow(i.getPosY() - t_pos_y,2)) < i.getRadius()) {
+          tps->setToDelete(true);
+        }
+      }
+      
+      if (sqrt(pow(p.getPosX() - t_pos_x,2) + 
+               pow(p.getPosY() - t_pos_y,2) +
+               pow(p.getPosZ() - t_pos_z,2)) < enmy->getRadius()) {
+        tps->setToDelete(true);
+        is_playing = false;
+      }
+      
+    } 
+    
+
+    cout << tps->getPosX() << " " << tps->getPosY() << " " << tps->getPosZ() << endl;
+  }
+  del_tps = e_torpedos.begin();
+  tps = e_torpedos.begin();
+  while (tps != e_torpedos.end()) {
+    if (tps->getToDelete()) {
+      del_tps = tps;
+      tps++;
+      e_torpedos.erase(del_tps);
+
+    } else {
+      tps++;
+    }
+  }
+  
   return;
 }
 
