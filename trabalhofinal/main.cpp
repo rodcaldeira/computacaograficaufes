@@ -471,22 +471,22 @@ void mouse(int button, int state, int x, int y) {
       torpedos.push_back(Torpedo(p.getPosX(), p.getPosY(), p.getPosZ(), p.getTethaCenter()+p.getTethaCanon(), p.getTethaCanonZ(), p.getRadius()/12, p.getSubmerginStatus(), x, y));
     }
   }
-  if (button == GLUT_RIGHT_BUTTON) { // para cima
-    if (state == GLUT_DOWN) {
-      mouse_info.setPosX(x);
-      mouse_info.setPosY(y);
-      mouseX = x;
-      mouseY = y;
-      mouseStates[button] = true;
-      right_button = 1;
-    } else {
-      mouseStates[button] = false;
-      right_button = 0;
-      camera_angle = 0;
-      camera_angle_z = 0;
-      torpedos.push_back(Torpedo(p.getPosX(), p.getPosY(), p.getPosZ(), p.getTethaCenter(), 0.0, p.getRadius()/12, 1, x, y));
-    }
-  }
+  // if (button == GLUT_RIGHT_BUTTON) { // para cima
+  //   if (state == GLUT_DOWN) {
+  //     mouse_info.setPosX(x);
+  //     mouse_info.setPosY(y);
+  //     mouseX = x;
+  //     mouseY = y;
+  //     mouseStates[button] = true;
+  //     right_button = 1;
+  //   } else {
+  //     mouseStates[button] = false;
+  //     right_button = 0;
+  //     camera_angle = 0;
+  //     camera_angle_z = 0;
+  //     torpedos.push_back(Torpedo(p.getPosX(), p.getPosY(), p.getPosZ(), p.getTethaCenter(), 0.0, p.getRadius()/12, 1, x, y));
+  //   }
+  // }
 
 }
 
@@ -519,7 +519,7 @@ void dragAndDrop(int x, int y) {
     perc = tmp_y - h2;
     p.setTethaCanonZ(30.0 * perc/h2);
   }
-  cout << p.getTethaCanon() << endl;
+  //cout << p.getTethaCanon() << endl;
   x += dx;
   y += dy;
   
@@ -534,20 +534,86 @@ void dragAndDrop(int x, int y) {
   glutPostRedisplay();
 }
 
+
+GLfloat distanciaGeral(GLfloat x, GLfloat y, GLfloat z, GLfloat xo, GLfloat yo, GLfloat zo ){
+  int dist= 0;
+
+  dist = sqrt((x-xo)*(x-xo) + (y-yo)*(y-yo)+ (z-zo)*(z-zo));
+
+  return dist;
+
+}
+GLfloat colisaoPlayerIlha=0;
+
+
+GLfloat colisaoHeroiIlhas(GLfloat xsub, GLfloat ysub, GLfloat zsub){
+
+  for(Island i : islands){
+
+
+    if(distanciaGeral(xsub,ysub,0, i.getPosX(), i.getPosY(), 0) < p.getMaxRadius()+ i.getRadius()){
+      colisaoPlayerIlha ++;
+    }
+
+  }
+  return colisaoPlayerIlha;
+}
+
+
+GLfloat colisaoPlayerSub=0;
+GLfloat colisaoHeroiInimigos(GLfloat xsub, GLfloat ysub, GLfloat zsub){
+
+  for(Submarine::submarine e : enemies){
+
+
+    if(distanciaGeral(xsub,ysub,zsub, e.getPosX(), e.getPosY(), e.getPosZ()) < (p.getMaxRadius()+ e.getRadius())){
+      colisaoPlayerSub ++;
+    }
+
+  }
+  return colisaoPlayerSub;
+}
+
+GLfloat colisaoLimite=0;
+GLfloat colisaoHeroiLimite(GLfloat xsub, GLfloat ysub, GLfloat zsub){
+    if(distanciaGeral(xsub,ysub,0, 0 , 0, 0) >  world.getRadius() - p.getMaxRadius()){
+      colisaoLimite ++;
+    }
+  return colisaoLimite;
+}
+
+
 void updatePlayer(GLdouble timeDiff) {
   float dist = p.getVel() * timeDiff;
   //Treat keyPress
   if(keyStatus[(int)('w')])
   {
+    //cout << colisaoPlayerIlha << endl;
+    p.updateHeli(80);
     p.Move(dist);
-  }
+    if((colisaoHeroiIlhas(p.getPosX(),p.getPosY(),p.getPosZ())>0) || (colisaoHeroiLimite(p.getPosX(),p.getPosY(),p.getPosZ())>0) || (colisaoHeroiInimigos(p.getPosX(),p.getPosY(),p.getPosZ()))>0){
+      p.Move(-dist);
+      colisaoPlayerIlha = 0;
+      colisaoLimite=0;
+      colisaoPlayerSub=0;
+    }
+    }
   if(keyStatus[(int)('d')])
   {
     p.RotateTethaPaddle(+0.05*timeDiff);
   }
   if(keyStatus[(int)('s')])
   {
+    //cout << "move backward" << endl;
     p.Move(-dist);
+    p.updateHeli(-80);
+
+    if((colisaoHeroiIlhas(p.getPosX(),p.getPosY(),p.getPosZ())>0) || (colisaoHeroiLimite(p.getPosX(),p.getPosY(),p.getPosZ())>0)|| (colisaoHeroiInimigos(p.getPosX(),p.getPosY(),p.getPosZ()))>0){
+      p.Move(+dist);
+      colisaoPlayerIlha = 0;
+      colisaoLimite=0;
+      colisaoPlayerSub=0;
+    }
   }
   if(keyStatus[(int)('a')])
   {
@@ -556,14 +622,54 @@ void updatePlayer(GLdouble timeDiff) {
   if(keyStatus[(int)('u')])
   {
     p.submerge(timeDiff*1);
+    if(colisaoHeroiInimigos(p.getPosX(),p.getPosY(),p.getPosZ())>0){
+      p.submerge(timeDiff*(-1));
+      colisaoPlayerSub=0;
+
+    }
   }
   if(keyStatus[(int)('j')])
   {
     p.submerge(timeDiff*(-1));
+    if(colisaoHeroiInimigos(p.getPosX(),p.getPosY(),p.getPosZ())>0){
+      p.submerge(timeDiff*(1));
+      colisaoPlayerSub=0;
+
+    }
   }
   // handling idle moves and collision
   p.updateHeli(timeDiff);
 }
+// void updatePlayer(GLdouble timeDiff) {
+//   float dist = p.getVel() * timeDiff;
+//   //Treat keyPress
+//   if(keyStatus[(int)('w')])
+//   {
+//     p.Move(dist);
+//   }
+//   if(keyStatus[(int)('d')])
+//   {
+//     p.RotateTethaPaddle(+0.05*timeDiff);
+//   }
+//   if(keyStatus[(int)('s')])
+//   {
+//     p.Move(-dist);
+//   }
+//   if(keyStatus[(int)('a')])
+//   {
+//     p.RotateTethaPaddle(-0.05*timeDiff);
+//   }
+//   if(keyStatus[(int)('u')])
+//   {
+//     p.submerge(timeDiff*1);
+//   }
+//   if(keyStatus[(int)('j')])
+//   {
+//     p.submerge(timeDiff*(-1));
+//   }
+//   // handling idle moves and collision
+//   p.updateHeli(timeDiff);
+// }
 
 void updateEnemies(GLdouble timeDiff) {
   del_enemy = enemies.begin();
@@ -617,6 +723,15 @@ void updateEnemies(GLdouble timeDiff) {
 }
 
 void updateTorpedos(GLdouble timediff) {
+  for (tps = torpedos.begin(); tps != torpedos.end(); ++tps) {
+    tps->shot(timediff, p.getVelTiro());
+    if (sqrt(pow((tps->getPosX()-world.getPosX()),2) + pow((tps->getPosY()-world.getPosY()),2)) >= world.getRadius() - tps->getRadius()) {
+      tps->setToDelete(true);
+    }
+    cout << tps->getPosX() << " " << tps->getPosY() << endl;
+  }
+  cout << torpedos.size() << endl;
+  for (Torpedo tps : e_torpedos) tps.shot(timediff, enemy_vel_tiro);
   return;
 }
 
@@ -625,6 +740,7 @@ void idle(void)
   static GLdouble previousTime = 0;
 	GLdouble currentTime;
 	GLdouble timeDiference;
+  
 
 	// Elapsed time from the initiation of the game
 	currentTime = glutGet(GLUT_ELAPSED_TIME);

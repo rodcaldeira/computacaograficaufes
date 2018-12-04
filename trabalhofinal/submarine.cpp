@@ -319,10 +319,10 @@ void submarine::DesenhaSubmarine(GLfloat x, GLfloat y, GLfloat radius, GLfloat c
 		glPushMatrix();
 			glTranslatef(radius, 0.0, 0.0);
 			glColor3f(0.0, 0.0, 0.0);
-			glRotatef(90, 0.0, 1.0, 0.0);
 			glRotatef(tetha_canon, 0, 0, 1);
+			glRotatef(90, 0.0, 1.0, 0.0);
 			glRotatef(tetha_canon_z, 0, 1, 0);
-			std::cout << tetha_canon << std::endl;
+			// std::cout << tetha_canon << std::endl;
 			GLUquadricObj *quadric=gluNewQuadric();
 			gluQuadricNormals(quadric, GLU_SMOOTH);
 			gluQuadricOrientation(quadric,GLU_OUTSIDE);
